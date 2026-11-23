@@ -23,7 +23,7 @@ describe('CatalogPage (core, add-on flags off)', () => {
     expect(screen.queryByRole('button', { name: /^Apply:/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('complementary', { name: 'Mock API controls' })).not.toBeInTheDocument();
 
-    await user.type(screen.getByRole('searchbox', { name: 'Search products' }), 'shoes');
+    await user.type(screen.getByRole('combobox', { name: 'Search products' }), 'shoes');
     await resultsHeading('2 results for “shoes”');
     expect(productTitles()).toEqual(['Trail Running Shoes', 'Leather Formal Shoes']);
     await waitFor(() => expect(currentSearch()).toBe('?q=shoes'));
@@ -39,7 +39,7 @@ describe('CatalogPage (core, add-on flags off)', () => {
   it('conversational and unknown words: results stay, with a visible and announced note', async () => {
     const { user, currentSearch } = renderApp();
     await resultsHeading('12 results');
-    await user.type(screen.getByRole('searchbox', { name: 'Search products' }), 'mujhe shoes xyzabc chahiye');
+    await user.type(screen.getByRole('combobox', { name: 'Search products' }), 'mujhe shoes xyzabc chahiye');
     await resultsHeading('2 results for “mujhe shoes xyzabc chahiye”');
     expect(screen.getByText('Showing results for “shoes” — ignored: “xyzabc”')).toBeInTheDocument();
     await waitFor(() =>
@@ -47,14 +47,14 @@ describe('CatalogPage (core, add-on flags off)', () => {
     );
     // The URL and the box keep exactly what was typed.
     await waitFor(() => expect(currentSearch()).toBe('?q=mujhe%20shoes%20xyzabc%20chahiye'));
-    expect(screen.getByRole('searchbox', { name: 'Search products' })).toHaveValue('mujhe shoes xyzabc chahiye');
+    expect(screen.getByRole('combobox', { name: 'Search products' })).toHaveValue('mujhe shoes xyzabc chahiye');
   });
 
   it('restores the exact view from a shared URL', async () => {
     renderApp({ route: '/?q=shoes&category=Apparel,Sports&inStock=true&sort=price_desc' });
     await resultsHeading('2 results for “shoes”');
 
-    expect(screen.getByRole('searchbox', { name: 'Search products' })).toHaveValue('shoes');
+    expect(screen.getByRole('combobox', { name: 'Search products' })).toHaveValue('shoes');
     expect(screen.getByRole('checkbox', { name: /^Apparel/ })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: /^Sports/ })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: /^Books/ })).not.toBeChecked();
@@ -93,7 +93,7 @@ describe('CatalogPage (core, add-on flags off)', () => {
 
     await resultsHeading('12 results');
     expect(currentSearch()).toBe('?utm_source=mail');
-    const search = screen.getByRole('searchbox', { name: 'Search products' });
+    const search = screen.getByRole('combobox', { name: 'Search products' });
     expect(search).toHaveValue('');
     expect(search).toHaveFocus();
   });
@@ -105,7 +105,7 @@ describe('CatalogPage (core, add-on flags off)', () => {
     await user.click(screen.getByRole('button', { name: 'Remove filter: “shoes”' }));
     await resultsHeading('3 results');
     expect(currentSearch()).toBe('?minPrice=3000');
-    expect(screen.getByRole('searchbox', { name: 'Search products' })).toHaveValue('');
+    expect(screen.getByRole('combobox', { name: 'Search products' })).toHaveValue('');
   });
 
   it('commits price on Enter and explains an inverted range', async () => {
@@ -153,7 +153,7 @@ describe('CatalogPage (core, add-on flags off)', () => {
     await user.tab();
     expect(screen.getByRole('link', { name: 'Skip to results' })).toHaveFocus();
     await user.tab();
-    expect(screen.getByRole('searchbox', { name: 'Search products' })).toHaveFocus();
+    expect(screen.getByRole('combobox', { name: 'Search products' })).toHaveFocus();
     await user.keyboard('rug{Enter}');
     await waitFor(() => expect(currentSearch()).toBe('?q=rug'));
 
@@ -184,7 +184,7 @@ describe('CatalogPage add-ons (flags on)', () => {
     const { user, currentSearch } = renderApp({ services: createTestServices({ smartSearch: true }) });
     await resultsHeading('12 results');
 
-    await user.type(screen.getByRole('searchbox', { name: 'Search products' }), 'shoes under 3000 in stock');
+    await user.type(screen.getByRole('combobox', { name: 'Search products' }), 'shoes under 3000 in stock');
     const apply = await screen.findByRole('button', { name: 'Apply: up to ₹3,000 · in stock · “shoes”' });
     // Nothing is applied automatically: no price or stock filter until the button is used.
     // (The core search's unknown-word fallback already shows shoes for the literal text.)
@@ -195,7 +195,7 @@ describe('CatalogPage add-ons (flags on)', () => {
     await user.click(apply);
     await resultsHeading('1 result for “shoes”');
     expect(currentSearch()).toBe('?q=shoes&maxPrice=3000&inStock=true');
-    expect(screen.getByRole('searchbox', { name: 'Search products' })).toHaveValue('shoes');
+    expect(screen.getByRole('combobox', { name: 'Search products' })).toHaveValue('shoes');
   });
 
   it('shows mock controls that force a simulated 500, and Retry recovers', async () => {

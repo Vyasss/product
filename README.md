@@ -84,7 +84,7 @@ the brief's eight fields, and the mock API returns exactly that shape.
 | No lag typing or rendering large lists; justified strategy; no redundant re-renders | Row virtualisation, deferred search, memoised cards, cheap per-card cart subscription | `ProductGrid.tsx`, `ProductCard.tsx` | `npm run bench`, `npm run perf`, e2e DOM-count test |
 | Client-side routing on S3 + CloudFront with fallback to `/index.html` | CloudFront Function rewrites extension-less paths (`/product/p-00042`, `/cart`, `/checkout`) | `infra/cloudfront/spa-rewrite.js`, `src/app/router.tsx` | e2e `cloudfront.spec.ts` (runs the function in a VM), e2e deep-link reloads |
 | No hardcoded secrets; `VITE_*` config | One module reads `import.meta.env` and validates it | `src/config/env.ts`, `.env.example` | `env.test.ts` |
-| Vitest + RTL tests: core filter/sort logic and a user flow | 452 tests in 22 files | `src/**/*.test.ts(x)` | `npm test` |
+| Vitest + RTL tests: core filter/sort logic and a user flow | 472 tests in 23 files | `src/**/*.test.ts(x)` | `npm test` |
 | README with setup, architecture, performance, CloudFront notes, improvements | This file | `README.md` | n/a |
 
 ### Add-ons beyond the brief
@@ -106,6 +106,7 @@ feature flags off; the core interaction tests run with both flags off.
 | Category facet counts, active filter chips | Quicker refinement and undo | Stop passing `facetCounts`; delete `<ActiveFilterChips>`. |
 | On-page mock controls | Trigger the simulated 500 without editing the URL | Off by default (`VITE_ENABLE_MOCK_CONTROLS`). |
 | `HttpProductService` | Seam for a real API (`VITE_API_BASE_URL`) | Unused unless the variable is set. |
+| Search suggestions and recent searches | Completes what is being typed with phrases from the catalog ("sma" offers smart watch, smart tv, smartphone) and offers the last five searches again. Typing still filters instantly; nothing is selected unless picked | `src/search/suggest.ts`, `src/search/recentSearches.ts`, `useSearchSuggestions.ts`; omit the `suggestions` prop on `<SearchBox>`. |
 | Share button (catalog, product page, cart) and shared cart links | The brief only needs the URL to be shareable, which it is; the button makes that visible, and `/cart?items=` lets a cart be shared although carts live in storage | `ShareButton.tsx`, `shareLink.ts`, `src/cart/sharedCart.ts`, `SharedCartNotice.tsx`; delete `<ShareButton>`. |
 | Link-preview tags and image (`VITE_SITE_URL`) | A shared link shows a site card in chat apps once deployed | Tags in `index.html`, `public/og-image.png`, `siteUrl` plugin in `vite.config.ts`. |
 | Bundled fonts (Inter, Playfair Display) and the AllinONE identity | A more polished storefront; self-hosted, no CDN | Remove the two imports in `main.tsx`; the system stack takes over. |
@@ -147,6 +148,26 @@ what was typed; the relaxation is derived, and the result object carries the cor
 the UI does not recompute them. If no word matches anything, the normal empty state shows.
 
 ![Search with a typo corrected and the note above the results](docs/screenshots/search-corrected.png)
+
+### Search suggestions
+
+As text is typed, the search box lists up to six completions, and results still update on
+every keystroke exactly as before: a suggestion is only applied when it is picked.
+
+- **Where they come from.** Every run of one to three consecutive title words shared by at
+  least two products, plus every brand, counted once per catalog load. Because the phrases
+  come from the titles, every suggestion finds products. Product types rise to the top by
+  count ("sma" gives smart watch, smart tv, smartphone before any single model), and a
+  fragment that only ever occurs inside one longer phrase is dropped ("yoga" in favour of
+  "yoga mat"). One typed letter gets no suggestions.
+- **Recent searches.** The last five searches confirmed with Enter or by picking a suggestion
+  are kept in this browser's storage and offered when the box is empty or they match what is
+  typed. Nothing is sent anywhere; unreadable stored data is ignored.
+- **Keyboard and screen readers.** The field is a combobox with a listbox (WAI-ARIA list
+  autocomplete, manual selection): Down and Up move the highlight, Enter picks it, Esc closes
+  the list and keeps the text, Tab moves on without picking. Focus never leaves the field.
+- The same suggestions appear in the header search on the product, cart and checkout pages,
+  where picking one opens the catalog with that query.
 
 ### Product page, cart, Buy now, checkout
 
@@ -523,7 +544,7 @@ Nothing has been deployed. The files in `infra/cloudfront/` have not been run ag
 
 ## Tests
 
-`npm test`: **452 tests in 22 files** (Vitest, jsdom, React Testing Library, user-event):
+`npm test`: **472 tests in 23 files** (Vitest, jsdom, React Testing Library, user-event):
 generator (determinism, checksum, price spread, illustrations for every item type), mock
 service, engine filters and sorts, conversational search (stop words, fallback, typo table
 including brand typos, short-token and correct-query cases), URL codec, smart-search phrases,
@@ -571,8 +592,8 @@ checkout interactions, and an axe scan.
 
 Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 
-- `npm run typecheck`, `npm run lint` exit 0; `npm test` 452 passed in 22 files;
-  `npm run e2e` 58 passed in real Chrome, including axe on every main page.
+- `npm run typecheck`, `npm run lint` exit 0; `npm test` 472 passed in 23 files;
+  `npm run e2e` 63 passed in real Chrome, including axe on every main page.
 - Build: main JS 319.38 kB (102.69 kB gzip), CSS 39.31 kB (8.59 kB gzip); lazy chunks
   StorePage 59.56 kB (21.23 kB gzip, shared by the product, cart and checkout pages),
   CartPage 7.12 kB (2.71 kB gzip), ProductPage 6.56 kB (2.61 kB gzip), CheckoutPage 5.53 kB

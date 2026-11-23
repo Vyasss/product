@@ -3,6 +3,7 @@ import type { CartStore } from '../cart/cartStore';
 import type { ProductContentProvider } from '../data/productContent';
 import type { MockControls } from '../data/mockControls';
 import type { ProductService } from '../data/ProductService';
+import type { RecentSearches } from '../search/recentSearches';
 import type { SearchEngineFactory } from '../search/SearchEngine';
 import type { QueryInterpreter } from '../smart-search/QueryInterpreter';
 
@@ -18,6 +19,8 @@ export interface Services {
   /** Generated display content (description, highlights, review count). */
   productContent: ProductContentProvider;
   createSearchEngine: SearchEngineFactory;
+  /** The last few searches, kept in this browser only (localStorage in the app, memory in tests). */
+  recentSearches: RecentSearches;
   /** Non-null only when VITE_FEATURE_SMART_SEARCH is on. */
   queryInterpreter: QueryInterpreter | null;
   /** Non-null only when VITE_ENABLE_MOCK_CONTROLS is on and the mock service is used. */

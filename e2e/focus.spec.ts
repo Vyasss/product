@@ -22,7 +22,7 @@ test('keyboard focus shows a 3px ring in the right colour on light and dark surf
   await waitForCards(page);
 
   // Dark header: mint ring around the search field.
-  await expectRing(page, page.getByRole('searchbox', { name: 'Search products' }), ACCENT);
+  await expectRing(page, page.getByRole('combobox', { name: 'Search products' }), ACCENT);
   // The Clear button sits on the white field, so it switches back to blue.
   await expectRing(page, page.getByRole('button', { name: 'Clear search' }), FOCUS_BLUE);
   // Light surfaces.

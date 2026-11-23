@@ -1,6 +1,7 @@
 import type { FilterState } from '../domain/filters';
 import type { Product } from '../domain/product';
 import type { FacetCounts } from './facetCounts';
+import type { SuggestionEntry } from './suggest';
 
 export interface SearchResult {
   /** Positions into the products array the engine was built with, in display order. */
@@ -29,6 +30,8 @@ export interface SearchRelaxation {
  */
 export interface SearchEngine {
   search(filters: FilterState): SearchResult;
+  /** Completions for partly typed text, best first. Each one finds products when searched. */
+  suggest(text: string, limit?: number): readonly SuggestionEntry[];
 }
 
 export type SearchEngineFactory = (products: readonly Product[]) => SearchEngine;

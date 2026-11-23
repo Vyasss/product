@@ -10,7 +10,7 @@ test('full journey with the keyboard only: search, category, price, sort, clear 
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to results' })).toBeFocused();
   await page.keyboard.press('Tab');
-  const search = page.getByRole('searchbox', { name: 'Search products' });
+  const search = page.getByRole('combobox', { name: 'Search products' });
   await expect(search).toBeFocused();
 
   // Search
@@ -59,7 +59,7 @@ test('full journey with the keyboard only: search, category, price, sort, clear 
 test('conversational search and typo correction in real Chrome', async ({ page }) => {
   await page.goto('/');
   await waitForCards(page);
-  const search = page.getByRole('searchbox', { name: 'Search products' });
+  const search = page.getByRole('combobox', { name: 'Search products' });
 
   await search.click();
   await page.keyboard.type('ek smart tv chahie', { delay: 30 });

@@ -5,6 +5,7 @@ import { createProductService } from '../data/createProductService';
 import { templateProductContent } from '../data/productContent';
 import { ServicesContext, type Services } from '../hooks/useServices';
 import { createInMemorySearchEngine } from '../search/InMemorySearchEngine';
+import { createRecentSearches, localRecentSearchStorage } from '../search/recentSearches';
 import { RuleBasedInterpreter } from '../smart-search/RuleBasedInterpreter';
 
 /** The composition root: the one place that picks implementations for the UI's interfaces. */
@@ -19,6 +20,7 @@ export function createServices(config: AppConfig, locationSearch: string): Servi
     cartStore: createCartStore(localCartStorage()),
     productContent: templateProductContent,
     createSearchEngine: createInMemorySearchEngine,
+    recentSearches: createRecentSearches(localRecentSearchStorage()),
     queryInterpreter: config.smartSearch ? new RuleBasedInterpreter() : null,
     mockControls: config.enableMockControls ? mockControls : null,
   };

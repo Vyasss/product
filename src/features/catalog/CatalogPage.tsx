@@ -30,6 +30,7 @@ import { ProductGrid } from './ProductGrid';
 import { ResultSummary } from './ResultSummary';
 import { SearchBox } from './SearchBox';
 import { SmartSearchSuggestion } from './SmartSearchSuggestion';
+import { useSearchSuggestions } from './useSearchSuggestions';
 import { useSearchText } from './useSearchText';
 
 const EMPTY_PARAMS = new URLSearchParams();
@@ -107,6 +108,21 @@ export function CatalogPage() {
     [resetSearchText, update],
   );
 
+  // Type-ahead: completions come from the catalog, recent searches from this browser.
+  const { suggestions, remember } = useSearchSuggestions(search.text, engine);
+  const submitSearch = useCallback(() => {
+    flushSearch();
+    remember(search.text);
+  }, [flushSearch, remember, search.text]);
+  const pickSuggestion = useCallback(
+    (text: string) => {
+      onTextChange(text);
+      flushSearch();
+      remember(text);
+    },
+    [onTextChange, flushSearch, remember],
+  );
+
   const clearSearch = useCallback(() => {
     onTextChange('');
     flushSearch();
@@ -153,9 +169,11 @@ export function CatalogPage() {
         <SearchBox
           value={search.text}
           onChange={onTextChange}
-          onSubmit={flushSearch}
+          onSubmit={submitSearch}
           onClear={clearSearch}
           inputRef={searchInputRef}
+          suggestions={suggestions}
+          onPick={pickSuggestion}
         />
       </SiteHeader>
 

@@ -25,6 +25,13 @@ function Icon({ children, className = 'size-5', ...rest }: IconProps & { childre
   );
 }
 
+export const ClockIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </Icon>
+);
+
 export const ShareIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx="18" cy="5" r="3" />

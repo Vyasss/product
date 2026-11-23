@@ -44,7 +44,7 @@ test.describe('phone (390 x 844)', () => {
     expect(pinned).toBeGreaterThan(0);
     expect(pinned).toBeLessThanOrEqual(120);
     // Search stays reachable while scrolled.
-    await expect(page.getByRole('searchbox', { name: 'Search products' })).toBeInViewport();
+    await expect(page.getByRole('combobox', { name: 'Search products' })).toBeInViewport();
   });
 });
 

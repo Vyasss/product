@@ -6,6 +6,7 @@ import { facetCountsFromArray } from './facetCounts';
 import { closestBySound, closestWord, splitCompound, type VocabularyWord } from './fuzzy';
 import { tokenize } from './normalize';
 import { withoutStopWords } from './stopWords';
+import { buildSuggestionEntries, suggest, type SuggestionEntry } from './suggest';
 import type { SearchEngine, SearchRelaxation, SearchResult } from './SearchEngine';
 
 type Comparator = (a: number, b: number) => number;
@@ -58,11 +59,18 @@ export class InMemorySearchEngine implements SearchEngine {
   /** Built once with the index; only read when a strict search finds nothing. */
   private readonly vocabulary: readonly VocabularyWord[];
   private readonly wordFrequency: ReadonlyMap<string, number>;
+  /** Built on first use: only needed once someone types in the search box. */
+  private suggestionEntries: readonly SuggestionEntry[] | null = null;
 
   constructor(products: readonly Product[]) {
     this.index = buildIndex(products);
     this.vocabulary = buildVocabulary(this.index.haystacks);
     this.wordFrequency = new Map(this.vocabulary.map(({ word, frequency }) => [word, frequency]));
+  }
+
+  suggest(text: string, limit?: number): readonly SuggestionEntry[] {
+    this.suggestionEntries ??= buildSuggestionEntries(this.index.products);
+    return suggest(text, this.suggestionEntries, limit);
   }
 
   search(filters: FilterState): SearchResult {

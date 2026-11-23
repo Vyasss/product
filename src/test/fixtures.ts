@@ -6,6 +6,7 @@ import { ApiError, createAbortError, type ProductService } from '../data/Product
 import type { Product } from '../domain/product';
 import type { Services } from '../hooks/useServices';
 import { createInMemorySearchEngine } from '../search/InMemorySearchEngine';
+import { createRecentSearches, memoryRecentSearchStorage } from '../search/recentSearches';
 import { RuleBasedInterpreter } from '../smart-search/RuleBasedInterpreter';
 
 export function makeProduct(overrides: Partial<Product> & Pick<Product, 'id'>): Product {
@@ -78,6 +79,7 @@ export function createTestServices(options: TestServicesOptions = {}): Services 
         options.service ??
         new MockProductService({ latency: () => 0, failurePolicy, loadProducts: () => FIXTURE_PRODUCTS }),
       createSearchEngine: createInMemorySearchEngine,
+      recentSearches: createRecentSearches(memoryRecentSearchStorage()),
       queryInterpreter: options.smartSearch ? new RuleBasedInterpreter() : null,
       mockControls: failurePolicy,
       cartStore: options.cartStore ?? createCartStore(memoryCartStorage()),
@@ -87,6 +89,7 @@ export function createTestServices(options: TestServicesOptions = {}): Services 
   return {
     productService: options.service ?? new FakeProductService(),
     createSearchEngine: createInMemorySearchEngine,
+    recentSearches: createRecentSearches(memoryRecentSearchStorage()),
     queryInterpreter: options.smartSearch ? new RuleBasedInterpreter() : null,
     mockControls: null,
     cartStore: options.cartStore ?? createCartStore(memoryCartStorage()),

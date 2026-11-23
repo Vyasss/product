@@ -10,7 +10,7 @@ test('a shared URL restores the exact view, also after reload', async ({ page })
     await waitForCards(page);
     await expectResults(page, '260 results for “shoes”');
     await expectSearch(page, '?q=shoes&category=Apparel,Sports&inStock=true&sort=price_asc');
-    await expect(page.getByRole('searchbox', { name: 'Search products' })).toHaveValue('shoes');
+    await expect(page.getByRole('combobox', { name: 'Search products' })).toHaveValue('shoes');
     await expect(page.getByRole('checkbox', { name: /^Apparel/ })).toBeChecked();
     await expect(page.getByRole('checkbox', { name: /^Sports/ })).toBeChecked();
     await expect(page.getByRole('checkbox', { name: /^Books/ })).not.toBeChecked();
@@ -43,12 +43,16 @@ test('typing does not flood the history, and Back re-syncs the search box', asyn
   await waitForCards(page);
   const before = await page.evaluate(() => history.length);
 
-  const search = page.getByRole('searchbox', { name: 'Search products' });
+  const search = page.getByRole('combobox', { name: 'Search products' });
   await search.click();
   await page.keyboard.type('running shoes', { delay: 40 });
   await expectSearch(page, '?q=running%20shoes&category=Books');
   await expectResults(page, '0 results for “running shoes”');
   expect(await page.evaluate(() => history.length)).toBe(before);
+
+  // The suggestion list is still open over the chips; Esc closes it and keeps the text.
+  await page.keyboard.press('Escape');
+  await expect(search).toHaveValue('running shoes');
 
   // A discrete change pushes one entry; Back returns to the typed query and the box follows.
   await page.getByRole('button', { name: 'Remove filter: Books' }).click();
