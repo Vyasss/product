@@ -43,19 +43,20 @@ function Thumbnail({ product, className }: { product: Product; className: string
           loading="lazy"
           decoding="async"
           onError={() => setFailed(true)}
-          className={`h-full w-full object-contain p-2 transition-transform duration-300 ease-out motion-safe:group-hover:scale-[1.03] ${dim}`}
+          className={`h-full w-full object-contain p-2 transition-transform duration-300 ease-out motion-safe:group-hover:scale-[1.06] ${dim}`}
         />
       )}
     </div>
   );
 }
 
-function StockLine({ product, id }: { product: Product; id: string }) {
+/** `compact` (phone list card) uses the short label so it fits beside the price. */
+function StockLine({ product, id, compact = false }: { product: Product; id: string; compact?: boolean }) {
   const inCart = useCartQuantity(product.id);
   if (!product.inStock) {
     return (
       <p id={id} className="truncate text-sm font-semibold text-danger">
-        Currently unavailable
+        {compact ? 'Out of stock' : 'Currently unavailable'}
       </p>
     );
   }
@@ -97,8 +98,12 @@ export const ProductCard = memo(function ProductCard({
     'aria-setsize': setSize,
     'aria-labelledby': titleId,
   } as const;
+  // Hover (pointer devices only; Tailwind's hover: is gated on `(hover: hover)`, so touch
+  // screens never get a stuck state): a 2px lift, a tinted border and a tighter shadow. All of
+  // it stays within the row's 6px paint bleed, and the lift is skipped for reduced motion.
   const cardClass =
-    'group relative transition-shadow duration-200 hover:shadow-raised';
+    'group relative transition-[box-shadow,border-color,transform] duration-200 ease-out ' +
+    'hover:border-brand/45 hover:shadow-hover motion-safe:hover:-translate-y-0.5';
 
   const title = (
     <h3 id={titleId} className="line-clamp-2 h-10 text-sm leading-5 font-medium text-ink">
@@ -108,7 +113,7 @@ export const ProductCard = memo(function ProductCard({
         data-product-link={product.id}
         title={product.title}
         onClick={() => onOpen?.(product.id)}
-        className="group-hover:underline after:absolute after:inset-0 after:rounded-card after:content-[''] focus-visible:outline-none focus-visible:after:outline-3 focus-visible:after:outline-offset-2 focus-visible:after:outline-focus"
+        className="transition-colors group-hover:text-brand-ink group-hover:underline after:absolute after:inset-0 after:rounded-card after:content-[''] focus-visible:outline-none focus-visible:after:outline-3 focus-visible:after:outline-offset-2 focus-visible:after:outline-focus"
       >
         {product.title}
       </Link>
@@ -125,7 +130,7 @@ export const ProductCard = memo(function ProductCard({
   if (layout === 'list') {
     return (
       <Card {...listItem} className={`flex h-full ${cardClass}`}>
-        <Thumbnail product={product} className="w-28 shrink-0 rounded-l-card" />
+        <Thumbnail product={product} className="w-20 shrink-0 rounded-l-card min-[360px]:w-28" />
         <div className="flex min-w-0 flex-1 flex-col gap-1 p-3">
           <div className="flex items-center justify-between gap-2">
             {brand}
@@ -136,11 +141,13 @@ export const ProductCard = memo(function ProductCard({
           {title}
           {description}
           {rating}
-          <div className="mt-auto flex items-center justify-between gap-2">
+          <div className="flex items-center justify-between gap-2">
             <Price value={product.price} />
-            <CardActions product={product} layout="list" reasonId={stockId} />
+            <div className="min-w-0 text-right">
+              <StockLine product={product} id={stockId} compact />
+            </div>
           </div>
-          <StockLine product={product} id={stockId} />
+          <CardActions product={product} reasonId={stockId} className="mt-auto" />
         </div>
       </Card>
     );
@@ -159,7 +166,7 @@ export const ProductCard = memo(function ProductCard({
         {rating}
         <Price value={product.price} />
         <StockLine product={product} id={stockId} />
-        <CardActions product={product} layout="grid" reasonId={stockId} className="mt-auto" />
+        <CardActions product={product} reasonId={stockId} className="mt-auto" />
       </div>
     </Card>
   );

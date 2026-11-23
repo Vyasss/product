@@ -2,7 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { tabTo, waitForCards } from './helpers';
 
 const FOCUS_BLUE = 'rgb(31, 95, 209)'; // --color-focus, light surfaces
-const ACCENT = 'rgb(127, 220, 193)'; // --color-accent, dark header and footer
+const ACCENT = 'rgb(242, 198, 207)'; // --color-accent, dark header and footer
 
 async function outlineOf(target: Locator) {
   return target.evaluate((element) => {
@@ -40,7 +40,7 @@ test('focus ring on a primary button and on a link in the dark header', async ({
   await expectRing(page, retry, FOCUS_BLUE);
 
   await page.goto('/not-here');
-  await expectRing(page, page.getByRole('link', { name: 'Bazora home' }), ACCENT);
+  await expectRing(page, page.getByRole('link', { name: 'AllinONE home' }), ACCENT);
 });
 
 test('a focused product link rings the whole card (on its overlay)', async ({ page }) => {

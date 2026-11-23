@@ -29,7 +29,8 @@ describe('cart and product page (add-ons)', () => {
     renderApp();
     const button = await screen.findByRole('button', { name: 'Add to cart: Cotton T-Shirt' });
     expect(button).toBeDisabled();
-    expect(button).toHaveAccessibleDescription('Currently unavailable');
+    // jsdom has no width, so the grid renders its one-column (phone) cards, which use the short label.
+    expect(button).toHaveAccessibleDescription('Out of stock');
   });
 
   it('product page: content, quantity stepper and Add to cart', async () => {
@@ -45,7 +46,7 @@ describe('cart and product page (add-ons)', () => {
     await user.click(screen.getByRole('button', { name: 'Add to cart' }));
     await cartLink(3);
     expect(screen.getByText(/In your cart:/)).toHaveTextContent('In your cart: 3');
-    expect(document.title).toBe('Trail Running Shoes | Bazora');
+    expect(document.title).toBe('Trail Running Shoes | AllinONE');
   });
 
   it('product page: unavailable product has both buttons disabled with the reason', async () => {

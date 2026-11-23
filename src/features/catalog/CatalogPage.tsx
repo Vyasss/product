@@ -116,6 +116,17 @@ export function CatalogPage() {
   const openFilters = useCallback(() => setFiltersOpen(true), []);
   const closeFilters = useCallback(() => setFiltersOpen(false), []);
 
+  // Phones: the filter sheet covers the lower part of the screen. While it is open, keep the
+  // start of the list just under the header, so the space above the sheet shows products (not
+  // the results bar) and they visibly change as filters are ticked. Runs after the grid's own
+  // "back to the top" effect, so this position wins while the sheet is open.
+  const resultsRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!filtersOpen || typeof window.matchMedia !== 'function') return;
+    if (!window.matchMedia('(max-width: 639px)').matches) return;
+    resultsRef.current?.scrollIntoView({ block: 'start' });
+  }, [filtersOpen, resetKey]);
+
   const canClear = hasActiveFilters(filters) || search.text !== '' || filters.sort !== null;
   const facetCounts = result?.facetCounts ?? null;
 
@@ -131,7 +142,7 @@ export function CatalogPage() {
       <SiteHeader
         brand={
           <h1>
-            <span className="sr-only">Bazora product catalog</span>
+            <span className="sr-only">AllinONE product catalog</span>
             <span aria-hidden="true">
               <Wordmark markOnlyOnPhones />
             </span>
@@ -176,7 +187,7 @@ export function CatalogPage() {
               onApply={applySmartSearch}
             />
           )}
-          <section aria-label="Results" aria-busy={status !== 'success'} className="pt-4">
+          <section ref={resultsRef} aria-label="Results" aria-busy={status !== 'success'} className="pt-4">
             {productsState.status === 'loading' && <LoadingState />}
             {productsState.status === 'error' && (
               <ErrorState error={productsState.error} retrying={productsState.retrying} onRetry={retry} />

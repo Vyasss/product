@@ -25,6 +25,15 @@ function Icon({ children, className = 'size-5', ...rest }: IconProps & { childre
   );
 }
 
+export const ShareIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <path d="m8.6 10.7 6.8-4.4M8.6 13.3l6.8 4.4" />
+  </Icon>
+);
+
 export const SearchIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx="11" cy="11" r="7" />

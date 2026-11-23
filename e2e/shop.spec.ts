@@ -35,7 +35,7 @@ test('open a product from a filtered, scrolled list; Back restores filters, scro
   await expect(page).toHaveURL(/\/product\/p-\d{5}$/);
   const heading = page.getByRole('heading', { level: 1, name: title });
   await expect(heading).toBeFocused();
-  await expect(page).toHaveTitle(`${title} | Bazora`);
+  await expect(page).toHaveTitle(`${title} | AllinONE`);
 
   await page.getByRole('button', { name: 'Add to cart', exact: true }).click();
   await expect(cartLink(page, 1)).toBeVisible();

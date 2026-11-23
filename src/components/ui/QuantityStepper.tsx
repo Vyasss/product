@@ -1,6 +1,6 @@
 import { useId, useState, type ReactNode } from 'react';
 import { IconButton } from './IconButton';
-import { MinusIcon, PlusIcon } from './icons';
+import { MinusIcon, PlusIcon, TrashIcon } from './icons';
 
 export interface QuantityStepperProps {
   /** Visible label, e.g. "Quantity". */
@@ -11,13 +11,19 @@ export interface QuantityStepperProps {
   min: number;
   max: number;
   onChange: (value: number) => void;
+  /**
+   * When given, the decrease button stays active at the minimum and removes the item
+   * (it shows a bin instead of a minus), so "one less than one" does what people expect.
+   */
+  onRemove?: () => void;
 }
 
 /**
  * − / number / + control. The input accepts typing (committed when it is a whole number in
- * range, reset on blur otherwise); the buttons disable at the limits.
+ * range, reset on blur otherwise); the buttons disable at the limits, except that with
+ * `onRemove` the decrease button removes the item at the minimum.
  */
-export function QuantityStepper({ label, itemName, value, min, max, onChange }: QuantityStepperProps) {
+export function QuantityStepper({ label, itemName, value, min, max, onChange, onRemove }: QuantityStepperProps) {
   const id = useId();
   const [draft, setDraft] = useState(String(value));
   const [synced, setSynced] = useState(value);
@@ -26,6 +32,7 @@ export function QuantityStepper({ label, itemName, value, min, max, onChange }: 
     setDraft(String(value));
   }
   const of = itemName ? ` of ${itemName}` : '';
+  const removesAtMin = onRemove !== undefined && value <= min;
 
   return (
     <div>
@@ -34,10 +41,10 @@ export function QuantityStepper({ label, itemName, value, min, max, onChange }: 
       </label>
       <div className="inline-flex items-center rounded-control border border-line-strong bg-card">
         <IconButton
-          label={`Decrease quantity${of}`}
-          icon={<MinusIcon className="size-4" />}
-          disabled={value <= min}
-          onClick={() => onChange(Math.max(min, value - 1))}
+          label={removesAtMin ? `Decrease quantity${of}: removes it from the cart` : `Decrease quantity${of}`}
+          icon={removesAtMin ? <TrashIcon className="size-4" /> : <MinusIcon className="size-4" />}
+          disabled={value <= min && !removesAtMin}
+          onClick={() => (removesAtMin ? onRemove() : onChange(Math.max(min, value - 1)))}
           className="disabled:opacity-40"
         />
         <input

@@ -4,6 +4,20 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Search, filter and sort a catalog of 5,000 products." />
+    <!--
+      Link previews (WhatsApp, Teams, email clients). Preview fetchers read this HTML and do not
+      run JavaScript, so every URL of this single-page app shows this one site-level card.
+      __SITE_URL__ is replaced at build time with VITE_SITE_URL (see vite.config.ts): preview
+      images must be absolute URLs. Per-product cards would need per-URL HTML (see README).
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="AllinONE" />
+    <meta property="og:title" content="AllinONE: everything in one place" />
+    <meta property="og:description" content="Search, filter and sort a catalog of 5,000 products." />
+    <meta property="og:image" content="__SITE_URL__/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Product Catalog</title>
   </head>

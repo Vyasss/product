@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { generateProducts } from '../data/generateProducts';
 import { DEFAULT_FILTERS, type FilterState } from '../domain/filters';
-import { closestWord, editDistance, maxEditsFor } from './fuzzy';
+import { closestBySound, closestWord, editDistance, maxEditsFor, soundKey, splitCompound } from './fuzzy';
 import { InMemorySearchEngine } from './InMemorySearchEngine';
 import { withoutStopWords } from './stopWords';
 
@@ -80,6 +80,12 @@ describe('typo tolerance', () => {
     ['vlotix', 'voltix', [{ from: 'vlotix', to: 'voltix' }]],
     ['stirdex shoes', 'stridex shoes', [{ from: 'stirdex', to: 'stridex' }]],
     ['ek smrt tv chahie', 'smart tv', [{ from: 'smrt', to: 'smart' }]],
+    ['shooz', 'shoes', [{ from: 'shooz', to: 'shoes' }]],
+    ['headfones', 'headphones', [{ from: 'headfones', to: 'headphones' }]],
+    ['hedfones', 'headphones', [{ from: 'hedfones', to: 'headphones' }]],
+    ['smarttv', 'smart tv', [{ from: 'smarttv', to: 'smart tv' }]],
+    ['ek smarttv chahie', 'smart tv', [{ from: 'smarttv', to: 'smart tv' }]],
+    ['yogamat', 'yoga mat', [{ from: 'yogamat', to: 'yoga mat' }]],
   ])('"%s" is corrected to "%s"', (query, applied, corrections) => {
     const result = search(query);
     expect(result.total).toBeGreaterThan(0);
@@ -104,7 +110,34 @@ describe('typo tolerance', () => {
     expect(editDistance('vlotix', 'voltix', 2)).toBe(1);
     expect(editDistance('runing', 'running', 2)).toBe(1);
     expect(editDistance('abc', 'xyz', 1)).toBe(2);
-    expect([maxEditsFor('tv'), maxEditsFor('shoe'), maxEditsFor('running'), maxEditsFor('headphnes')]).toEqual([0, 1, 1, 2]);
+    expect([maxEditsFor('tv'), maxEditsFor('shoe'), maxEditsFor('shooz'), maxEditsFor('running'), maxEditsFor('headphnes')]).toEqual([0, 1, 2, 2, 3]);
+  });
+
+  it('splits run-together words only into two catalog words', () => {
+    const frequency = new Map([['smart', 40], ['tv', 30], ['sm', 1], ['arttv', 1]]);
+    expect(splitCompound('smarttv', frequency)).toEqual(['smart', 'tv']);
+    expect(splitCompound('smartxx', frequency)).toBeNull();
+    expect(splitCompound('tv', frequency)).toBeNull();
+  });
+
+  it('matches by sound when the spelling is too far for edit distance', () => {
+    expect(soundKey('hedfones')).toBe(soundKey('headphones'));
+    expect(soundKey('jaket')).toBe(soundKey('jacket'));
+    expect(soundKey('किताब')).toBeNull();
+    const vocabulary = [
+      { word: 'headphones', frequency: 9 },
+      { word: 'helmet', frequency: 20 },
+    ];
+    expect(closestBySound('hedfones', vocabulary)).toBe('headphones');
+    expect(closestBySound('zz', vocabulary)).toBeNull();
+  });
+
+  it('nonsense still gives the empty state rather than a far-fetched correction', () => {
+    for (const query of ['zzzz', 'qqqqqq', 'xkcdwvz']) {
+      const result = search(query);
+      expect(result.total).toBe(0);
+      expect(result.relaxed).toBeNull();
+    }
   });
 
   it('breaks ties deterministically: more products first, then alphabetical', () => {

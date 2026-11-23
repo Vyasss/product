@@ -19,7 +19,7 @@ export interface ProductGridProps {
 /** Grid card height (multi-column rows), in rem. */
 export const CARD_HEIGHT_REM = 26.5;
 /** List card height (one column: image left, details right), in rem. */
-export const LIST_CARD_HEIGHT_REM = 14;
+export const LIST_CARD_HEIGHT_REM = 15.5;
 export const GAP_REM = 1;
 const MIN_CARD_WIDTH_PX = 220;
 const MAX_COLUMNS = 6;

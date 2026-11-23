@@ -11,51 +11,59 @@
   --color-white: #ffffff;
 
   /* Text */
-  --color-ink: #17202b;
-  --color-ink-muted: #4f5b67;
+  --color-ink: #1b1b22;
+  --color-ink-muted: #565863;
 
-  /* Surfaces and lines */
-  --color-surface: #f2f4f3;
-  --color-tint: #e8f0ee;
+  /* Surfaces and lines: warm ivory rather than grey */
+  --color-surface: #f7f5f0;
+  --color-tint: #f0ebe6;
   --color-card: #ffffff;
-  --color-line: #dde3e1;
-  --color-line-strong: #7d8a92;
+  --color-line: #e3ded3;
+  --color-line-strong: #857f73;
 
-  /* Brand (Bazora teal) */
-  --color-brand: #0f6b62;
-  --color-brand-strong: #0a524b;
-  --color-brand-soft: #e1f1ed;
-  --color-brand-ink: #0b5c54;
-  --color-header: #10302d;
-  --color-header-muted: #b7d4cf;
-  --color-accent: #7fdcc1;
-  --color-accent-strong: #5ccfae;
+  /* Brand (AllinONE): deep plum with a blush-rose accent */
+  --color-brand: #4b2a7b;
+  --color-brand-strong: #3a1f61;
+  --color-brand-soft: #efeaf7;
+  --color-brand-ink: #45267a;
+  --color-header: #1f1433;
+  --color-header-muted: #d3c8e6;
+  --color-accent: #f2c6cf;
+  --color-accent-strong: #e8adb9;
 
   /* Status */
-  --color-success: #17763a;
-  --color-danger: #b3261e;
-  --color-danger-soft: #fdecea;
-  --color-warn-soft: #fff4d6;
+  --color-success: #17663a;
+  --color-danger: #a3261e;
+  --color-danger-soft: #fbeceb;
+  --color-warn-soft: #fbf1d8;
   --color-warn-ink: #6b4a00;
-  --color-star: #b9770e;
-  --color-star-empty: #cfd6d4;
+  --color-star: #a66f17;
+  --color-star-empty: #d8d3c8;
 
   /* Interaction */
   --color-focus: #1f5fd1;
-  --color-overlay: rgb(16 48 45 / 0.55);
-  --color-skeleton: #e3e8e6;
-  --color-skeleton-shine: #f3f6f5;
+  --color-overlay: rgb(31 20 51 / 0.55);
+  --color-skeleton: #e9e5dc;
+  --color-skeleton-shine: #f6f3ed;
 
   /* Shape and depth */
-  --radius-control: 0.5rem;
-  --radius-card: 0.75rem;
-  --shadow-card: 0 1px 2px rgb(16 48 45 / 0.06), 0 1px 3px rgb(16 48 45 / 0.08);
-  --shadow-raised: 0 12px 28px -10px rgb(16 48 45 / 0.28), 0 2px 6px rgb(16 48 45 / 0.08);
+  --radius-control: 0.625rem;
+  --radius-card: 1rem;
+  --shadow-card: 0 1px 2px rgb(31 20 51 / 0.04), 0 4px 10px -6px rgb(31 20 51 / 0.12);
+  /* Card hover: kept short so it fits inside the virtual row, which clips painting 6px out. */
+  --shadow-hover: 0 1px 2px rgb(31 20 51 / 0.06), 0 6px 10px -6px rgb(31 20 51 / 0.42);
+  --shadow-raised: 0 14px 30px -12px rgb(31 20 51 / 0.28), 0 2px 6px rgb(31 20 51 / 0.08);
   --shadow-header: 0 2px 8px rgb(0 0 0 / 0.18);
 
-  /* Type: system stack, no font download */
+  /*
+   * Type: Inter for the interface, Playfair Display for the wordmark and page headings.
+   * Both are bundled with the app (imported in main.tsx): no request leaves the site, and
+   * the system stack shows until they load.
+   */
   --font-sans:
-    system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+    'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial,
+    sans-serif;
+  --font-display: 'Playfair Display Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
 
   --animate-shimmer: shimmer 1.4s ease-in-out infinite;
 
@@ -83,11 +91,17 @@
 @layer base {
   html {
     color-scheme: light;
-    scroll-padding-top: calc(var(--header-h) + 1rem);
+    scroll-padding-top: var(--header-h);
   }
 
   body {
     @apply bg-surface font-sans text-ink antialiased;
+  }
+
+  /* Page headings carry the display face; everything else stays in the interface face. */
+  h1 {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
   }
 
   /*

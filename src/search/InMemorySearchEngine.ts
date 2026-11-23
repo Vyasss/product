@@ -3,7 +3,7 @@ import { CATEGORIES, type Product } from '../domain/product';
 import { ALIAS_TERMS, expandToken } from './aliases';
 import { buildIndex, CATEGORY_CODE, type SearchIndex } from './buildIndex';
 import { facetCountsFromArray } from './facetCounts';
-import { closestWord, type VocabularyWord } from './fuzzy';
+import { closestBySound, closestWord, splitCompound, type VocabularyWord } from './fuzzy';
 import { tokenize } from './normalize';
 import { withoutStopWords } from './stopWords';
 import type { SearchEngine, SearchRelaxation, SearchResult } from './SearchEngine';
@@ -46,8 +46,10 @@ function buildVocabulary(haystacks: readonly string[]): VocabularyWord[] {
  * Query handling, in order:
  * 1. Stop words ("ek", "please", "चाहिए") are removed, unless the query is only stop words.
  * 2. Strict: every remaining token must match. If that finds anything, it is the result.
- * 3. Otherwise, each token that matches no product at all is corrected to the closest
- *    catalog word (typo tolerance) or, if none is close, dropped, and the search runs again.
+ * 3. Otherwise, each token that matches no product at all is split into two catalog words
+ *    if it is two words run together ("smarttv"), else corrected to the closest catalog
+ *    word by edit distance, else to one that sounds alike ("hedfones"), else dropped, and
+ *    the search runs again.
  *    The result says what was corrected or dropped. These steps only run when step 2 is
  *    empty, so the common case costs nothing extra.
  */
@@ -55,10 +57,12 @@ export class InMemorySearchEngine implements SearchEngine {
   private readonly index: SearchIndex;
   /** Built once with the index; only read when a strict search finds nothing. */
   private readonly vocabulary: readonly VocabularyWord[];
+  private readonly wordFrequency: ReadonlyMap<string, number>;
 
   constructor(products: readonly Product[]) {
     this.index = buildIndex(products);
     this.vocabulary = buildVocabulary(this.index.haystacks);
+    this.wordFrequency = new Map(this.vocabulary.map(({ word, frequency }) => [word, frequency]));
   }
 
   search(filters: FilterState): SearchResult {
@@ -83,7 +87,13 @@ export class InMemorySearchEngine implements SearchEngine {
         kept.push(token);
         continue;
       }
-      const corrected = closestWord(token, this.vocabulary);
+      const parts = splitCompound(token, this.wordFrequency);
+      if (parts) {
+        kept.push(...parts);
+        corrections.push({ from: token, to: parts.join(' ') });
+        continue;
+      }
+      const corrected = closestWord(token, this.vocabulary) ?? closestBySound(token, this.vocabulary);
       if (corrected) {
         kept.push(corrected);
         corrections.push({ from: token, to: corrected });
