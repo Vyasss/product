@@ -1,0 +1,167 @@
+{
+  "environment": {
+    "note": "Throttled desktop Chrome (headless), not a real phone",
+    "chrome": "157.0.8103.79",
+    "cpu": "13th Gen Intel(R) Core(TM) i7-1355U",
+    "node": "v24.15.0",
+    "viewport": "390x844 @2x, touch emulation"
+  },
+  "results": [
+    {
+      "cpuThrottling": "1x",
+      "idleBaseline": {
+        "frameIntervalMs": {
+          "n": 180,
+          "median": 16.7,
+          "p95": 16.8,
+          "max": 17
+        },
+        "framesOver25ms": 0,
+        "longTasks": 0
+      },
+      "typing": {
+        "keystrokeToNextFrameMs": {
+          "n": 39,
+          "median": 8.1,
+          "p95": 17.2,
+          "max": 18.1
+        },
+        "longTasks": {
+          "count": 0,
+          "n": 0,
+          "median": 0,
+          "p95": 0,
+          "max": 0
+        }
+      },
+      "scroll": {
+        "distancePx": 18000,
+        "frameIntervalMs": {
+          "n": 645,
+          "median": 16.7,
+          "p95": 16.8,
+          "max": 17.6
+        },
+        "framesOver25ms": 0,
+        "longTasks": {
+          "count": 0,
+          "n": 0,
+          "median": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "cpuProfile": {
+          "sampledMs": 10820,
+          "idlePct": 92,
+          "browserNativePct": 6,
+          "garbageCollectorPct": 0,
+          "appJsPct": 1
+        }
+      }
+    },
+    {
+      "cpuThrottling": "4x",
+      "idleBaseline": {
+        "frameIntervalMs": {
+          "n": 181,
+          "median": 16.7,
+          "p95": 16.8,
+          "max": 16.9
+        },
+        "framesOver25ms": 0,
+        "longTasks": 0
+      },
+      "typing": {
+        "keystrokeToNextFrameMs": {
+          "n": 39,
+          "median": 33.8,
+          "p95": 83.8,
+          "max": 92.4
+        },
+        "longTasks": {
+          "count": 8,
+          "n": 8,
+          "median": 63,
+          "p95": 83,
+          "max": 83
+        }
+      },
+      "scroll": {
+        "distancePx": 18000,
+        "frameIntervalMs": {
+          "n": 791,
+          "median": 16.7,
+          "p95": 33.3,
+          "max": 66.7
+        },
+        "framesOver25ms": 50,
+        "longTasks": {
+          "count": 0,
+          "n": 0,
+          "median": 0,
+          "p95": 0,
+          "max": 0
+        },
+        "cpuProfile": {
+          "sampledMs": 14810,
+          "idlePct": 41,
+          "browserNativePct": 46,
+          "garbageCollectorPct": 0,
+          "appJsPct": 10
+        }
+      }
+    },
+    {
+      "cpuThrottling": "6x",
+      "idleBaseline": {
+        "frameIntervalMs": {
+          "n": 180,
+          "median": 16.7,
+          "p95": 16.8,
+          "max": 17.8
+        },
+        "framesOver25ms": 0,
+        "longTasks": 0
+      },
+      "typing": {
+        "keystrokeToNextFrameMs": {
+          "n": 39,
+          "median": 72.6,
+          "p95": 245.7,
+          "max": 253.4
+        },
+        "longTasks": {
+          "count": 24,
+          "n": 24,
+          "median": 77,
+          "p95": 126,
+          "max": 146
+        }
+      },
+      "scroll": {
+        "distancePx": 18000,
+        "frameIntervalMs": {
+          "n": 804,
+          "median": 16.7,
+          "p95": 66.7,
+          "max": 183.3
+        },
+        "framesOver25ms": 200,
+        "longTasks": {
+          "count": 28,
+          "n": 28,
+          "median": 58,
+          "p95": 76,
+          "max": 93
+        },
+        "cpuProfile": {
+          "sampledMs": 21350,
+          "idlePct": 16,
+          "browserNativePct": 66,
+          "garbageCollectorPct": 1,
+          "appJsPct": 13
+        }
+      }
+    }
+  ]
+}
