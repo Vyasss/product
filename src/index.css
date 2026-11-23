@@ -1,0 +1,122 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens: the single source of colour, radius, shadow and type for the app.
+ * The default Tailwind palette is switched off (`--color-*: initial`), so a stray
+ * `bg-slate-200` produces no CSS: every colour in the UI must come from this list.
+ * Contrast ratios for the text pairs are listed in README.md.
+ */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+
+  /* Text */
+  --color-ink: #17202b;
+  --color-ink-muted: #4f5b67;
+
+  /* Surfaces and lines */
+  --color-surface: #f2f4f3;
+  --color-tint: #e8f0ee;
+  --color-card: #ffffff;
+  --color-line: #dde3e1;
+  --color-line-strong: #7d8a92;
+
+  /* Brand (Bazora teal) */
+  --color-brand: #0f6b62;
+  --color-brand-strong: #0a524b;
+  --color-brand-soft: #e1f1ed;
+  --color-brand-ink: #0b5c54;
+  --color-header: #10302d;
+  --color-header-muted: #b7d4cf;
+  --color-accent: #7fdcc1;
+  --color-accent-strong: #5ccfae;
+
+  /* Status */
+  --color-success: #17763a;
+  --color-danger: #b3261e;
+  --color-danger-soft: #fdecea;
+  --color-warn-soft: #fff4d6;
+  --color-warn-ink: #6b4a00;
+  --color-star: #b9770e;
+  --color-star-empty: #cfd6d4;
+
+  /* Interaction */
+  --color-focus: #1f5fd1;
+  --color-overlay: rgb(16 48 45 / 0.55);
+  --color-skeleton: #e3e8e6;
+  --color-skeleton-shine: #f3f6f5;
+
+  /* Shape and depth */
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --shadow-card: 0 1px 2px rgb(16 48 45 / 0.06), 0 1px 3px rgb(16 48 45 / 0.08);
+  --shadow-raised: 0 12px 28px -10px rgb(16 48 45 / 0.28), 0 2px 6px rgb(16 48 45 / 0.08);
+  --shadow-header: 0 2px 8px rgb(0 0 0 / 0.18);
+
+  /* Type: system stack, no font download */
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+
+  --animate-shimmer: shimmer 1.4s ease-in-out infinite;
+
+  @keyframes shimmer {
+    0% {
+      background-position: 150% 0;
+    }
+    100% {
+      background-position: -50% 0;
+    }
+  }
+}
+
+/* Fixed header heights, so the sticky results bar can sit exactly underneath it. */
+/* Phones: one compact row (logo mark + search). Wider: wordmark + search. */
+:root {
+  --header-h: 4.5rem;
+}
+@media (min-width: 48rem) {
+  :root {
+    --header-h: 5rem;
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    scroll-padding-top: calc(var(--header-h) + 1rem);
+  }
+
+  body {
+    @apply bg-surface font-sans text-ink antialiased;
+  }
+
+  /*
+   * One visible focus style for every interactive element. Components transition only
+   * color, background-color and border-color (never outline-color), so the ring appears at once.
+   */
+  :focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+
+  /* ...switched to the light accent where the background is dark. */
+  [data-surface='dark'] :focus-visible {
+    outline-color: var(--color-accent);
+  }
+
+  /* The search box has its own clear button; hide the browser's duplicate. */
+  input[type='search']::-webkit-search-cancel-button {
+    appearance: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
