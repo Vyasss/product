@@ -1,5 +1,5 @@
 /**
- * Client-side cart (add-on). Framework-free: React reads it through `useSyncExternalStore`.
+ * Client-side cart. Framework-free: React reads it through `useSyncExternalStore`.
  * Only product ids and quantities are stored; prices always come from the dataset.
  */
 

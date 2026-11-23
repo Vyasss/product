@@ -11,13 +11,13 @@ import { useCatalogData } from '../../hooks/useCatalogData';
 import { SITE_NAME, useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
 import { useServices } from '../../hooks/useServices';
 import { PurchasePanel } from '../cart/PurchasePanel';
-import { ErrorState } from '../catalog/ErrorState';
-import { formatPrice } from '../catalog/format';
-import { Price } from '../catalog/Price';
+import { ErrorState } from '../shared/ErrorState';
+import { formatPrice } from '../shared/format';
+import { Price } from '../shared/Price';
 import { CARD_HEIGHT_REM } from '../catalog/ProductGrid';
 import { ProductCard } from '../catalog/ProductCard';
-import { ShareButton } from '../catalog/ShareButton';
-import { StateMessage } from '../catalog/StateMessage';
+import { ShareButton } from '../shared/ShareButton';
+import { StateMessage } from '../../components/ui/StateMessage';
 import { StorePage } from '../shell/StorePage';
 import { relatedProducts } from './related';
 
@@ -149,7 +149,7 @@ function DetailSkeleton() {
   );
 }
 
-/** `/product/:id` (lazy-loaded add-on). Only the eight Product fields plus generated content. */
+/** `/product/:id` (lazy-loaded). Only the eight Product fields plus generated content. */
 export default function ProductPage() {
   const { id = '' } = useParams();
   const { products, byId } = useCatalogData();

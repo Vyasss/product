@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { Link } from 'react-router';
 import { buttonClassName } from '../../components/ui/Button';
 import { useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
-import { StateMessage } from '../catalog/StateMessage';
+import { StateMessage } from '../../components/ui/StateMessage';
 import { StorePage } from '../shell/StorePage';
 
 function LostIllustration() {

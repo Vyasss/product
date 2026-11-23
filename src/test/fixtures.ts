@@ -62,7 +62,7 @@ export class FakeProductService implements ProductService {
 
 export interface TestServicesOptions {
   service?: ProductService;
-  /** Add-ons are off unless a test turns them on. */
+  /** Optional features are off unless a test turns them on. */
   smartSearch?: boolean;
   mockControls?: boolean;
   /** Pass a store on a shared memory backend to simulate a reload. */

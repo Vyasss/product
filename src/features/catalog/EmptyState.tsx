@@ -1,5 +1,5 @@
 import { Button } from '../../components/ui/Button';
-import { StateMessage } from './StateMessage';
+import { StateMessage } from '../../components/ui/StateMessage';
 
 export interface EmptyStateProps {
   query: string;

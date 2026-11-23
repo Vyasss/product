@@ -1,4 +1,4 @@
-# Add-on: continuous integration. Runs the same checks as the local definition of done.
+# Continuous integration: typecheck, lint, unit tests and a production build on every push.
 # Written for this project; it has not been run on GitHub.
 name: CI
 

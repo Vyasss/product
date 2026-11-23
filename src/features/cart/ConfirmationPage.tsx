@@ -3,8 +3,8 @@ import { Link, Navigate, useLocation } from 'react-router';
 import { buttonClassName } from '../../components/ui/Button';
 import { CheckIcon } from '../../components/ui/icons';
 import { useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
-import { formatPrice, pluralizeProducts } from '../catalog/format';
-import { StateMessage } from '../catalog/StateMessage';
+import { formatPrice, pluralizeProducts } from '../shared/format';
+import { StateMessage } from '../../components/ui/StateMessage';
 import { StorePage } from '../shell/StorePage';
 import type { ConfirmationState } from './CheckoutPage';
 

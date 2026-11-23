@@ -7,7 +7,7 @@ export interface MockControlsProps {
 }
 
 /**
- * Add-on, rendered only when VITE_ENABLE_MOCK_CONTROLS is on: lets a reviewer trigger the
+ * Rendered only when VITE_ENABLE_MOCK_CONTROLS is on: lets you trigger the
  * simulated 500 without editing the URL or env.
  */
 export function MockControls({ controls, onReload }: MockControlsProps) {

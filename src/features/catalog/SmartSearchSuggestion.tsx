@@ -2,7 +2,7 @@ import { memo, useMemo } from 'react';
 import { Button } from '../../components/ui/Button';
 import { SORT_LABELS, type FilterPatch } from '../../domain/filters';
 import type { QueryInterpreter } from '../../smart-search/QueryInterpreter';
-import { formatPrice } from './format';
+import { formatPrice } from '../shared/format';
 
 export interface SmartSearchSuggestionProps {
   text: string;
@@ -28,7 +28,7 @@ export function describePatch(patch: FilterPatch): string {
 }
 
 /**
- * Add-on (VITE_FEATURE_SMART_SEARCH): offers structured filters parsed from the text.
+ * Behind VITE_FEATURE_SMART_SEARCH: offers structured filters parsed from the text.
  * Nothing is applied until the user activates the button.
  */
 export const SmartSearchSuggestion = memo(function SmartSearchSuggestion({

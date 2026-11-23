@@ -10,8 +10,8 @@ import { useAnnounce } from '../../hooks/useAnnounce';
 import { useCart } from '../../hooks/useCart';
 import { useCatalogData } from '../../hooks/useCatalogData';
 import { useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
-import { ErrorState } from '../catalog/ErrorState';
-import { formatPrice } from '../catalog/format';
+import { ErrorState } from '../shared/ErrorState';
+import { formatPrice } from '../shared/format';
 import { StorePage } from '../shell/StorePage';
 import {
   DELIVERY_FIELDS,
@@ -30,7 +30,7 @@ export interface ConfirmationState {
 }
 
 /**
- * `/checkout` (lazy-loaded add-on). There is no payment step. The delivery details live only
+ * `/checkout` (lazy-loaded). There is no payment step. The delivery details live only
  * in this component's state: they are validated in the browser, never written to storage,
  * the URL or history state, and never sent anywhere. Placing the order clears the cart.
  */

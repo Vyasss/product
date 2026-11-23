@@ -2,7 +2,7 @@ import { useId } from 'react';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import type { CartSummary } from '../../cart/summary';
-import { formatPrice, pluralizeProducts } from '../catalog/format';
+import { formatPrice, pluralizeProducts } from '../shared/format';
 
 export interface SharedCartNoticeProps {
   /** The shared lines joined with the catalog; unknown and unavailable products are already left out. */

@@ -8,19 +8,19 @@ import type { QueryInterpreter } from '../smart-search/QueryInterpreter';
 
 /**
  * Everything the UI needs from the outside world, as interfaces. Implementations are chosen
- * once in `app/ServicesProvider` and tests inject fakes. Add-ons are present only when enabled:
+ * once in `app/ServicesProvider` and tests inject fakes. Optional services are present only when enabled:
  * a null capability means the related UI is not rendered at all.
  */
 export interface Services {
   productService: ProductService;
-  /** Add-on: the shopping cart (localStorage in the app, memory in tests). */
+  /** The shopping cart (localStorage in the app, memory in tests). */
   cartStore: CartStore;
-  /** Add-on: generated display content (description, highlights, review count). */
+  /** Generated display content (description, highlights, review count). */
   productContent: ProductContentProvider;
   createSearchEngine: SearchEngineFactory;
-  /** Add-on: non-null only when VITE_FEATURE_SMART_SEARCH is on. */
+  /** Non-null only when VITE_FEATURE_SMART_SEARCH is on. */
   queryInterpreter: QueryInterpreter | null;
-  /** Add-on: non-null only when VITE_ENABLE_MOCK_CONTROLS is on and the mock service is used. */
+  /** Non-null only when VITE_ENABLE_MOCK_CONTROLS is on and the mock service is used. */
   mockControls: MockControls | null;
 }
 

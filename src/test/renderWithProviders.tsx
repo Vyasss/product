@@ -8,7 +8,7 @@ import type { AppConfig } from '../config/env';
 import type { Services } from '../hooks/useServices';
 import { createTestServices } from './fixtures';
 
-/** Both add-on flags off: the core catalog must work without them. */
+/** Both feature flags off: the core catalog must work without them. */
 export const TEST_CONFIG: AppConfig = {
   apiBaseUrl: null,
   mockFailRate: 0,

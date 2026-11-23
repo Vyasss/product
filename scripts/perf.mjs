@@ -1,4 +1,4 @@
-// Throttled-Chrome measurements (add-on). Requires `npm run build` first.
+// Throttled-Chrome measurements. Requires `npm run build` first.
 //
 // Serves dist/ with `vite preview` and opens it in the locally installed Google Chrome at a
 // phone viewport (390 x 844) with CPU throttling via CDP (Emulation.setCPUThrottlingRate).

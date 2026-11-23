@@ -1,5 +1,5 @@
 import type { ReactNode, Ref } from 'react';
-import { Card } from '../../components/ui/Card';
+import { Card } from './Card';
 
 export interface StateMessageProps {
   illustration: ReactNode;

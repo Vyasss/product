@@ -18,7 +18,8 @@ function toError(value: unknown): Error {
 
 /**
  * Loads the catalog once per `service` and on every `retry()`. The in-flight request is
- * aborted on unmount and before each retry; aborts are never surfaced as errors.
+ * aborted on unmount and before each retry; aborts are never surfaced as errors. After a
+ * failure it also retries by itself when the browser reports it is back online.
  */
 export function useProducts(service: ProductService): UseProductsResult {
   const [state, setState] = useState<ProductsState>({ status: 'loading' });
@@ -44,6 +45,14 @@ export function useProducts(service: ProductService): UseProductsResult {
     );
     setAttempt((n) => n + 1);
   }, []);
+
+  // Back online after a failed load: try again without waiting for the user.
+  const failed = state.status === 'error';
+  useEffect(() => {
+    if (!failed) return undefined;
+    window.addEventListener('online', retry);
+    return () => window.removeEventListener('online', retry);
+  }, [failed, retry]);
 
   return useMemo(() => ({ ...state, retry }), [state, retry]);
 }

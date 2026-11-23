@@ -8,7 +8,7 @@ import type { Product } from '../../domain/product';
 import { useCartQuantity } from '../../hooks/useCartQuantity';
 import { useServices } from '../../hooks/useServices';
 import { CardActions } from '../cart/CardActions';
-import { Price } from './Price';
+import { Price } from '../shared/Price';
 
 export type CardLayout = 'grid' | 'list';
 

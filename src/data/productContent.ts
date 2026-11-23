@@ -4,7 +4,7 @@ import { mulberry32, pick, type Random } from './prng';
 import { ILLUSTRATION_FOR_ITEM, type IllustrationName } from './thumbnails';
 
 /**
- * Add-on: generated display content layered on top of the brief's eight-field `Product`.
+ * Generated display content layered on top of the eight-field `Product`.
  * Descriptions, highlights and review counts are MOCK content derived deterministically from
  * the product (its id seeds a private PRNG, separate from the dataset's stream, so the dataset
  * and its checksum are unaffected). A real API would return these fields from its own data,

@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { CloseIcon } from '../../components/ui/icons';
 import type { FilterPatch, FilterState } from '../../domain/filters';
-import { formatPrice } from './format';
+import { formatPrice } from '../shared/format';
 
 export interface ActiveFilterChipsProps {
   filters: FilterState;

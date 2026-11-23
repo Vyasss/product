@@ -57,3 +57,19 @@ export function readMockFailParam(search: string): number {
   const value = Number(raw);
   return Number.isInteger(value) && value > 0 ? Math.min(value, 100) : 0;
 }
+
+/** What a simulated failure looks like: an HTTP status, a dropped connection, or no answer in time. */
+export type MockFailure = number | 'network' | 'timeout';
+
+const MOCK_STATUSES: ReadonlySet<number> = new Set([400, 401, 403, 404, 408, 429, 500, 502, 503, 504]);
+
+/**
+ * Reads `mockStatus` from a query string so each error message can be seen without a real
+ * server: one of the listed HTTP statuses, `network` or `timeout`. Anything else means 500.
+ */
+export function readMockStatusParam(search: string): MockFailure {
+  const raw = new URLSearchParams(search).get('mockStatus');
+  if (raw === 'network' || raw === 'timeout') return raw;
+  const status = Number(raw);
+  return raw !== null && MOCK_STATUSES.has(status) ? status : 500;
+}

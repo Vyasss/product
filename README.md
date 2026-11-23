@@ -84,7 +84,7 @@ the brief's eight fields, and the mock API returns exactly that shape.
 | No lag typing or rendering large lists; justified strategy; no redundant re-renders | Row virtualisation, deferred search, memoised cards, cheap per-card cart subscription | `ProductGrid.tsx`, `ProductCard.tsx` | `npm run bench`, `npm run perf`, e2e DOM-count test |
 | Client-side routing on S3 + CloudFront with fallback to `/index.html` | CloudFront Function rewrites extension-less paths (`/product/p-00042`, `/cart`, `/checkout`) | `infra/cloudfront/spa-rewrite.js`, `src/app/router.tsx` | e2e `cloudfront.spec.ts` (runs the function in a VM), e2e deep-link reloads |
 | No hardcoded secrets; `VITE_*` config | One module reads `import.meta.env` and validates it | `src/config/env.ts`, `.env.example` | `env.test.ts` |
-| Vitest + RTL tests: core filter/sort logic and a user flow | 391 tests in 18 files | `src/**/*.test.ts(x)` | `npm test` |
+| Vitest + RTL tests: core filter/sort logic and a user flow | 452 tests in 22 files | `src/**/*.test.ts(x)` | `npm test` |
 | README with setup, architecture, performance, CloudFront notes, improvements | This file | `README.md` | n/a |
 
 ### Add-ons beyond the brief
@@ -96,8 +96,8 @@ feature flags off; the core interaction tests run with both flags off.
 |---|---|---|
 | Product page `/product/:id` (lazy chunk) | Clicking a product should show it: large illustration, details, Add to cart, Buy now, "More from this brand" / "More in <category>" | `src/features/product/`; remove the route in `src/app/router.tsx` and the title link in `ProductCard.tsx`. |
 | Cart (`CartStore`, localStorage, `/cart`) | Real add / change quantity / remove / clear, totals in INR, header badge, cross-tab sync | `src/cart/`, `src/features/cart/`, `useCart`; remove the route, `CartButton` and `CardActions`. |
-| Buy now and demo checkout `/checkout` | Full shopping flow requested by the user. No payment step; delivery details are validated in the browser only and never stored or sent | `CheckoutPage.tsx`, `ConfirmationPage.tsx`, `checkoutForm.ts`; remove the routes and the Buy now buttons. |
-| Generated descriptions, highlights, review counts | Requested for a fuller storefront. Mock content derived from the product, layered on top of the unchanged eight-field `Product` (see [Generated content](#generated-display-content)) | `src/data/productContent.ts` behind `ProductContentProvider`; swap for a provider that reads real API fields. |
+| Buy now and demo checkout `/checkout` | Completes the shopping flow from product to order confirmation. No payment step; delivery details are validated in the browser only and never stored or sent | `CheckoutPage.tsx`, `ConfirmationPage.tsx`, `checkoutForm.ts`; remove the routes and the Buy now buttons. |
+| Generated descriptions, highlights, review counts | Makes cards and product pages read like a real storefront. Mock content derived from the product, layered on top of the unchanged eight-field `Product` (see [Generated content](#generated-display-content)) | `src/data/productContent.ts` behind `ProductContentProvider`; swap for a provider that reads real API fields. |
 | Conversational search: stop words, unknown-word and typo fallback | "ek smart tv chahie" and "runing shoez" should find products; the strict match always wins | `src/search/stopWords.ts`, `src/search/fuzzy.ts`, `InMemorySearchEngine.ts`. Empty the stop-word list / skip `relax()` to turn off. |
 | Mixed-language aliases (joote, जूते, kitab, किताब, tv/television, earphones...) | Mixed-language shoppers type these terms | `src/search/aliases.ts`; empty `RAW_ALIASES`. |
 | React Router | URL state with history, routes for product/cart/checkout and the 404 | `src/url/useFilterState.ts`, `src/app/*`. |
@@ -106,6 +106,9 @@ feature flags off; the core interaction tests run with both flags off.
 | Category facet counts, active filter chips | Quicker refinement and undo | Stop passing `facetCounts`; delete `<ActiveFilterChips>`. |
 | On-page mock controls | Trigger the simulated 500 without editing the URL | Off by default (`VITE_ENABLE_MOCK_CONTROLS`). |
 | `HttpProductService` | Seam for a real API (`VITE_API_BASE_URL`) | Unused unless the variable is set. |
+| Share button (catalog, product page, cart) and shared cart links | The brief only needs the URL to be shareable, which it is; the button makes that visible, and `/cart?items=` lets a cart be shared although carts live in storage | `ShareButton.tsx`, `shareLink.ts`, `src/cart/sharedCart.ts`, `SharedCartNotice.tsx`; delete `<ShareButton>`. |
+| Link-preview tags and image (`VITE_SITE_URL`) | A shared link shows a site card in chat apps once deployed | Tags in `index.html`, `public/og-image.png`, `siteUrl` plugin in `vite.config.ts`. |
+| Bundled fonts (Inter, Playfair Display) and the AllinONE identity | A more polished storefront; self-hosted, no CDN | Remove the two imports in `main.tsx`; the system stack takes over. |
 | 29 bundled product illustrations | Every item type shows a picture of that kind of item | `src/assets/thumbnails/`, `src/data/thumbnails.ts`. |
 | Playwright e2e suite (dev only) | Verifies in real Chrome what jsdom cannot: layout, scrolling, Back/Forward, focus rings, contrast via axe | `e2e/`, `playwright.config.ts`, `npm run e2e`. Not in CI (Chrome on CI runners not verified from here). |
 | Perf and screenshot scripts (dev only) | Real throttled-Chrome numbers and reproducible docs screenshots | `scripts/perf.mjs`, `scripts/screenshots.mjs`. |
@@ -297,13 +300,15 @@ src/
   hooks/         useServices, useCatalogData, useProducts, useCart, useCartQuantity, useAnnounce,
                  useScrollMemory, usePageMeta, useDebouncedCallback, useContainerWidth
   components/    ui/ primitives, layout/ header, wordmark, footer
-  features/      catalog/, product/, cart/ (cart, checkout, confirmation), shell/, not-found/
+  features/      catalog/, product/, cart/ (cart, checkout, confirmation), shell/, not-found/,
+                 shared/ (pieces several features use: ErrorState, Price, ShareButton, format)
   app/           App, AppProviders, ServicesProvider, router (lazy routes), ErrorBoundary
 ```
 
 Dependency direction is `domain` ← `data`, `search`, `smart-search`, `cart`, `url` ← `hooks` ←
 `features` ← `app`, enforced by `no-restricted-imports` in `eslint.config.js`. Framework-free
-layers cannot import React; `components/ui` cannot import anything product-specific.
+layers cannot import React; `components/ui` cannot import anything product-specific, and `features/shared` cannot import
+from any single feature.
 
 **Interfaces, injected.** The UI depends on `ProductService`, `SearchEngine`,
 `QueryInterpreter`, `CartStore` and `ProductContentProvider`. `app/ServicesProvider.tsx` picks
@@ -368,42 +373,39 @@ strict match is empty; then a search costs about 1.5–2.7 ms here instead of ab
 Headless Chrome 157, 390×844 phone viewport with touch emulation, CPU throttled via CDP.
 Typing at about 8 keys/s (keydown to next painted frame) and scrolling with wheel steps at
 about 3,000 px/s for 6 s. An idle baseline is recorded first; it showed no late frames, so
-the browser itself was producing frames normally. Results in `docs/perf-results.json`. **This
-run was also taken while the machine was under other load. It is throttled desktop Chrome,
-not a phone: no real phone has been measured.**
+the browser itself was producing frames normally. Results in `docs/perf-results.json`. This
+run is of the current build (bundled fonts, Share button, card hover, phone filter sheet
+included). A dev server and a preview server were running but idle on the same machine.
+**It is throttled desktop Chrome, not a phone: no real phone has been measured.**
 
 | CPU | Typing: keystroke to frame (median / p95 / max) | Typing long tasks | Scroll: frame interval (median / p95) | Late frames (> 25 ms) | Scroll long tasks | Main thread during scroll |
 |---|---|---:|---|---:|---:|---|
-| 1x | 8.1 / 17.2 / 18.1 ms | 0 | 16.7 / 16.8 ms | 0 of 645 | 0 | mostly idle |
-| 4x | 33.8 / 83.8 / 92.4 ms | 8 | 16.7 / 33.3 ms | 50 of 791 | 0 | 46% browser-native, 10% app JS |
-| 6x | 72.6 / 245.7 / 253.4 ms | 24 (median 77 ms) | 16.7 / 66.7 ms (max 183) | 200 of 804 | 28 (median 58 ms) | 66% browser-native, 13% app JS |
+| 1x | 5.3 / 19.7 / 22.7 ms | 0 | 16.7 / 16.7 ms | 0 of 715 | 0 | mostly idle |
+| 4x | 26.6 / 60.2 / 66.3 ms | 6 | 16.7 / 16.7 ms (max 17.3) | 0 of 743 | 0 | 37% browser-native, 7% app JS |
+| 6x | 44.6 / 100.8 / 111.7 ms | 12 | 16.7 / 49.9 ms (max 99.9) | 125 of 785 (16%) | 2 (65 ms) | 57% browser-native, 10% app JS |
 
-Reading: smooth at 1x and acceptable at 4x. **At 6x, typing p95 is above a 200 ms
-responsiveness target and a quarter of scroll frames are late.** The profile shows the time is
-mostly the browser's own style, layout and paint work for newly mounted cards, not app
-JavaScript. Run-to-run variance is large under load (an earlier 6x run on the same code had 91
-late frames and typing p95 142 ms).
+Reading: smooth at 1x and at 4x (no late scroll frames). At 6x, typing stays well inside a
+200 ms responsiveness target (p95 about 101 ms), and **about one scroll frame in six is late,
+with two long tasks**. A second 6x run gave typing p95 108.6 ms and 112 of 763 frames late
+(15%), so the result is repeatable. The profile shows the remaining scroll cost is mostly the
+browser's own style, layout and paint work for newly mounted cards, not app JavaScript.
 
-**What the earlier 466 ms scroll result was, and what changed.** Two things combined:
+These numbers are sensitive to what else the machine is doing: a run taken while it was busy
+with other work read much worse at 6x, so compare runs only under similar conditions.
 
-1. **The measurement.** It used a synthetic CDP scroll gesture and ran while the machine was
-   overloaded (the dev server on port 5173 alone was using about 1.5–1.75 cores). The script
-   now scrolls with human-rate wheel steps, records an idle baseline to expose environmental
-   frame loss, profiles the main thread, measures 1x/4x/6x, and has hard timeouts.
-2. **A real regression in the app.** To stop focus rings being clipped, I had replaced the
-   rows' `contain: strict` with containment that excluded paint. A controlled A/B under the
-   same load showed paint containment was the single biggest scroll win (19 versus about 75
-   late frames per 100). Strict containment is back, with 6 px of row padding so the ring fits
-   inside the row.
+What keeps scrolling cheap, each found by profiling under throttling:
 
-Earlier fixes from the first throttled measurement (75% of frames late at 6x):
-- Virtualizer renders batched per frame instead of `flushSync` inside every scroll event.
-- Per-card cart subscriptions reduced to one number, with no effects.
-- Star rating drawn as a single small SVG.
-- Scroll-position saves debounced.
-- The per-card `:has()` focus selector replaced by a ring on the link overlay.
-- No backdrop blur on the results bar.
-- Overscan reduced from 3 rows to 2.
+- Virtual rows use `contain: strict`, with 6 px of padding so a focus ring still fits inside
+  the row. In an A/B test this was the largest single win (about 19 late frames per 100,
+  against about 75 without paint containment).
+- The virtualizer renders once per frame rather than synchronously inside every scroll event.
+- Each card subscribes to one number from the cart (its own quantity) and runs no effects.
+- The star rating is a single small SVG.
+- Scroll-position saves are debounced.
+- The card's focus ring is drawn on the link overlay rather than with a per-card `:has()`
+  selector.
+- The results bar has no backdrop blur.
+- Two rows of overscan.
 
 ## URL contract
 
@@ -419,6 +421,60 @@ Parsing never throws; one view has one canonical URL (rewritten once with `repla
 foreign params (`mockFail`, `utm_*`) are preserved. Stop-word removal, corrections and ignored
 words are derived from `q`, never written back. Cart state is not in the URL. Other routes:
 `/product/:id`, `/cart`, `/checkout`, `/checkout/confirmation` (shown once after an order).
+
+## Errors and resilience
+
+The aim is that a user rarely sees an error, and that when one is unavoidable it names its
+cause and offers the next step.
+
+**Preventing errors**
+
+- With the bundled mock dataset there is no request that can fail: data is generated in the
+  browser. The only failure is the simulated one the brief asks for.
+- With a real API (`VITE_API_BASE_URL`), `RetryingProductService` wraps the HTTP service and
+  quietly retries short-lived failures (network drop, timeout, 429, 500, 502, 503, 504) twice
+  with exponential backoff and jitter (about 0.4 s, then 0.8 s). Failures that retrying cannot
+  fix (404, 401/403, other 4xx, an unreadable body) and being offline are not retried. The
+  mock is deliberately not wrapped, so its simulated failure reaches the screen.
+- Requests time out after 10 s instead of hanging; an aborted request is never shown as an
+  error.
+- Every external input is parsed by a function that cannot throw: the URL, a shared cart
+  link, values in browser storage, and the API response (shape-checked product by product).
+- After a deploy, a tab opened before it would ask for a code-split chunk that no longer
+  exists; that failure triggers one automatic reload, never a loop.
+
+**When an error does happen**
+
+| Situation | What the user sees | Recovery |
+|---|---|---|
+| Offline | "You appear to be offline…" | Retries by itself when the browser is back online; Retry button |
+| No response while online (DNS, CORS, reset) | "The request did not complete. Check your connection." | Retry |
+| Timeout, or HTTP 408 | "The server took too long to answer…" | Retry |
+| 429 | "Too many requests…wait a few seconds" | Retry |
+| 502 / 503 / 504 | "Temporarily unavailable (status N)…usually clears up within a minute" | Retry |
+| Other 5xx (the simulated 500) | "The server responded with an error (status N)." | Retry |
+| 404, 401 / 403, other 4xx | Names the status and says retrying is unlikely to help | Retry stays available |
+| 2xx with a body that is not JSON or not products | "…data this page could not read" | Retry stays available |
+| Unknown URL path | Not-found page with a way back to the catalog | Link |
+| Unknown product id | "Product not found" with a link back | Link |
+| Shared cart link with unknown or malformed items | Notice that nothing is available; the visitor's own cart is untouched | Dismiss |
+| Product image fails to load | Fallback tile with the category initial; layout does not move | none needed |
+| Browser storage blocked or full | Cart works for the page's lifetime; nothing crashes | none needed |
+| A render error | "Something went wrong" with a Reload button (error boundary) | Reload |
+
+Search text, filters and sort are kept across every one of these: they live in the URL.
+
+Each message can be seen without a real server: `/?mockFail=1&mockStatus=503` (or `404`,
+`403`, `429`, `500`, `502`, `504`, `408`, `network`, `timeout`). `mockFail=N` fails the first
+N requests of the page load.
+
+At the hosting level (see [Deploying](#deploying-to-s3--cloudfront)): a missing hashed asset
+stays a real 404 rather than an HTML page, and unknown paths without a file extension are
+rewritten to `/index.html` so the app can show its own not-found page.
+
+Not done: the retry and timeout paths have unit tests with a fake `fetch` but have not been
+run against a live API; there is no error-reporting service, and no offline cache of a
+previously loaded catalog.
 
 ## Accessibility
 
@@ -467,7 +523,7 @@ Nothing has been deployed. The files in `infra/cloudfront/` have not been run ag
 
 ## Tests
 
-`npm test`: **391 tests in 18 files** (Vitest, jsdom, React Testing Library, user-event):
+`npm test`: **452 tests in 22 files** (Vitest, jsdom, React Testing Library, user-event):
 generator (determinism, checksum, price spread, illustrations for every item type), mock
 service, engine filters and sorts, conversational search (stop words, fallback, typo table
 including brand typos, short-token and correct-query cases), URL codec, smart-search phrases,
@@ -502,7 +558,7 @@ checkout interactions, and an axe scan.
 
 ## What I would improve with more time
 
-- 6x throttled typing and scrolling: reuse card DOM by slot instead of remounting per product
+- 6x throttled scrolling (about one frame in six late): reuse card DOM by slot instead of remounting per product
   id, trim card DOM further, and measure on real mid-range Android hardware.
 - Profile with source maps to name the remaining app-JS hot spots.
 - Run the e2e suite in CI (Chrome is present on hosted runners but this was not verified).
@@ -515,14 +571,18 @@ checkout interactions, and an axe scan.
 
 Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 
-- `npm run typecheck`, `npm run lint` exit 0; `npm test` 391 passed in 18 files;
-  `npm run e2e` 50 passed in real Chrome, including axe on every main page.
-- Build: main JS 372.26 kB (119.90 kB gzip), CSS 33.08 kB (7.45 kB gzip); lazy chunks
-  ProductPage 6.30 kB (2.52 kB gzip), CheckoutPage 5.48 kB (2.44 kB gzip), CartPage 4.52 kB
-  (1.74 kB gzip), QuantityStepper 1.26 kB, ConfirmationPage 1.25 kB.
+- `npm run typecheck`, `npm run lint` exit 0; `npm test` 452 passed in 22 files;
+  `npm run e2e` 58 passed in real Chrome, including axe on every main page.
+- Build: main JS 319.38 kB (102.69 kB gzip), CSS 39.31 kB (8.59 kB gzip); lazy chunks
+  StorePage 59.56 kB (21.23 kB gzip, shared by the product, cart and checkout pages),
+  CartPage 7.12 kB (2.71 kB gzip), ProductPage 6.56 kB (2.61 kB gzip), CheckoutPage 5.53 kB
+  (2.46 kB gzip), QuantityStepper 1.40 kB, ConfirmationPage 1.25 kB. Fonts: Inter 48.25 kB
+  and Playfair Display 38.40 kB (Latin, woff2, already compressed).
 - Pinned area on 390×844 after scrolling: 72 px. Cards in the DOM while scrolling the whole
   list: at most 32 at 1440 px, 9 at 390 px.
-- Throttled-Chrome and bench numbers above (both taken under other machine load).
+- Throttled-Chrome numbers above: measured on the current build with local servers
+  idle, 6x repeated once. The Node bench numbers are from an earlier run under other
+  machine load and predate the run-together-word and sound-alike search steps.
 - Screenshots in `docs/screenshots/` reviewed at 1440, 768 and 390 px, including focus rings.
 
 Not verified:

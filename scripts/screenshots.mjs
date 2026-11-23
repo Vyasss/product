@@ -1,4 +1,4 @@
-// Regenerates docs/screenshots/ (add-on). Requires `npm run build` first.
+// Regenerates docs/screenshots/. Requires `npm run build` first.
 // Serves dist/ with `vite preview` and drives the locally installed Google Chrome.
 
 import { mkdirSync, rmSync } from 'node:fs';

@@ -80,4 +80,9 @@ export default tseslint.config(
     'hooks may not depend on UI layers.',
   ),
   boundary(['src/features/**'], layer('app'), 'features may not depend on app.'),
+  boundary(
+    ['src/features/shared/**'],
+    [...layer('app', 'catalog', 'product', 'shell', 'not-found'), '../cart/**'],
+    'features/shared holds pieces used by several features and may not depend on any one of them.',
+  ),
 );

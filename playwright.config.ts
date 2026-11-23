@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 /**
- * Add-on: end-to-end tests in the locally installed Google Chrome (`channel: 'chrome'`), so no
+ * End-to-end tests in the locally installed Google Chrome (`channel: 'chrome'`), so no
  * browser download is needed. Runs against the production build served by `vite preview`.
  * Not part of `npm test`; run with `npm run e2e`.
  */

@@ -12,10 +12,10 @@ import { useAnnounce } from '../../hooks/useAnnounce';
 import { useCart } from '../../hooks/useCart';
 import { useCatalogData } from '../../hooks/useCatalogData';
 import { SITE_NAME, useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
-import { ErrorState } from '../catalog/ErrorState';
-import { formatPrice, pluralizeProducts } from '../catalog/format';
-import { ShareButton } from '../catalog/ShareButton';
-import { StateMessage } from '../catalog/StateMessage';
+import { ErrorState } from '../shared/ErrorState';
+import { formatPrice, pluralizeProducts } from '../shared/format';
+import { ShareButton } from '../shared/ShareButton';
+import { StateMessage } from '../../components/ui/StateMessage';
 import { StorePage } from '../shell/StorePage';
 import { SharedCartNotice } from './SharedCartNotice';
 
@@ -78,7 +78,7 @@ function CartLineRow({ item, onRemoved }: { item: CartItem; onRemoved: () => voi
 }
 
 /**
- * `/cart` (lazy-loaded add-on): lines, quantities, totals, clear, and the way to checkout.
+ * `/cart` (lazy-loaded): lines, quantities, totals, clear, and the way to checkout.
  * The cart itself lives in storage, not the URL, so sharing it builds a link that carries
  * the lines (`/cart?items=id:qty,...`). Opening such a link shows what was shared and lets
  * the visitor add it; it never changes their cart on its own.

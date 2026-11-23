@@ -1,14 +1,20 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import { lazy, Suspense, type ComponentType, type ReactNode } from 'react';
 import { Route, Routes } from 'react-router';
 import { Skeleton } from '../components/ui/Skeleton';
 import { CatalogPage } from '../features/catalog/CatalogPage';
 import { NotFoundPage } from '../features/not-found/NotFoundPage';
+import { browserReloadEnvironment, loadWithReload } from './lazyWithReload';
 
-// Add-on pages are code-split so the catalog bundle stays small.
-const ProductPage = lazy(() => import('../features/product/ProductPage'));
-const CartPage = lazy(() => import('../features/cart/CartPage'));
-const CheckoutPage = lazy(() => import('../features/cart/CheckoutPage'));
-const ConfirmationPage = lazy(() => import('../features/cart/ConfirmationPage'));
+// These pages are code-split so the catalog bundle stays small. A chunk that fails to load
+// (typically a tab opened before a deploy) triggers one automatic reload; see lazyWithReload.
+const reloadEnv = browserReloadEnvironment();
+const page = <T extends ComponentType>(load: () => Promise<{ default: T }>) =>
+  lazy(() => loadWithReload(load, reloadEnv));
+
+const ProductPage = page(() => import('../features/product/ProductPage'));
+const CartPage = page(() => import('../features/cart/CartPage'));
+const CheckoutPage = page(() => import('../features/cart/CheckoutPage'));
+const ConfirmationPage = page(() => import('../features/cart/ConfirmationPage'));
 
 function PageFallback() {
   return (

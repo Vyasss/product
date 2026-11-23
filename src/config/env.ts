@@ -7,9 +7,9 @@ export interface AppConfig {
   apiBaseUrl: string | null;
   /** Mock only: probability in [0, 1] that a request fails with a simulated 500. */
   mockFailRate: number;
-  /** Add-on: show the on-page mock controls panel. */
+  /** Show the on-page mock controls panel. */
   enableMockControls: boolean;
-  /** Add-on: show smart-search suggestions. */
+  /** Show smart-search suggestions. */
   smartSearch: boolean;
 }
 

@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Checkbox } from '../../components/ui/Checkbox';
 import { CATEGORIES, type Category } from '../../domain/product';
 import type { FacetCounts } from '../../search/facetCounts';
-import { formatCount } from './format';
+import { formatCount } from '../shared/format';
 
 export interface CategoryFilterProps {
   selected: readonly Category[];
