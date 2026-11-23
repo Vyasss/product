@@ -30,8 +30,11 @@ function trapTab(event: KeyboardEvent, container: HTMLElement) {
 }
 
 /**
- * Modal side panel. On open, focus moves into the panel and is kept there; Esc or the Close
- * button closes it, and focus returns to whatever opened it.
+ * Modal panel. On phones it is a bottom sheet that covers a little over half the screen, with
+ * a light backdrop, so the page behind (the results, which update as filters change) stays
+ * visible above it. From 640 px it is a side panel. On open, focus moves into the panel and is
+ * kept there; Esc, the Close button or a tap outside closes it, and focus returns to whatever
+ * opened it.
  */
 export function Drawer({ open, onClose, title, children, footer }: DrawerProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -73,13 +76,13 @@ export function Drawer({ open, onClose, title, children, footer }: DrawerProps) 
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed inset-0 z-50 flex max-sm:items-end">
       {/* Pointer-only backdrop; keyboard users close with Esc or the Close button. */}
       <button
         type="button"
         tabIndex={-1}
         aria-hidden="true"
-        className="absolute inset-0 cursor-default bg-overlay"
+        className="absolute inset-0 cursor-default bg-overlay max-sm:opacity-40"
         onClick={onClose}
       />
       <div
@@ -88,16 +91,17 @@ export function Drawer({ open, onClose, title, children, footer }: DrawerProps) 
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="relative ml-auto flex h-full w-full max-w-sm flex-col bg-card shadow-raised"
+        className="relative flex w-full flex-col bg-card shadow-raised max-sm:max-h-[58dvh] max-sm:rounded-t-card sm:ml-auto sm:h-full sm:max-w-sm"
       >
-        <div className="flex items-center justify-between border-b border-line px-4 py-2">
+        <span aria-hidden="true" className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-line sm:hidden" />
+        <div className="flex items-center justify-between border-b border-line px-4 py-2 max-sm:py-1">
           <h2 id={titleId} className="text-lg font-bold">
             {title}
           </h2>
           <IconButton label="Close" icon={<CloseIcon />} onClick={onClose} />
         </div>
-        <div className="flex-1 overflow-y-auto px-4 py-4">{children}</div>
-        {footer && <div className="border-t border-line bg-card p-4 shadow-card">{footer}</div>}
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">{children}</div>
+        {footer && <div className="border-t border-line bg-card p-4 shadow-card max-sm:py-3">{footer}</div>}
       </div>
     </div>,
     document.body,

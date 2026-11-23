@@ -8,13 +8,15 @@ import { Skeleton } from '../../components/ui/Skeleton';
 import { StarRating } from '../../components/ui/StarRating';
 import type { Product } from '../../domain/product';
 import { useCatalogData } from '../../hooks/useCatalogData';
-import { useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
+import { SITE_NAME, useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
 import { useServices } from '../../hooks/useServices';
 import { PurchasePanel } from '../cart/PurchasePanel';
 import { ErrorState } from '../catalog/ErrorState';
+import { formatPrice } from '../catalog/format';
 import { Price } from '../catalog/Price';
 import { CARD_HEIGHT_REM } from '../catalog/ProductGrid';
 import { ProductCard } from '../catalog/ProductCard';
+import { ShareButton } from '../catalog/ShareButton';
 import { StateMessage } from '../catalog/StateMessage';
 import { StorePage } from '../shell/StorePage';
 import { relatedProducts } from './related';
@@ -95,6 +97,15 @@ function ProductDetail({ product, headingRef }: { product: Product; headingRef: 
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <Badge tone="brand">{product.category}</Badge>
             <StarRating value={product.rating} reviewCount={content.reviewCount} />
+            <div className="ml-auto">
+              <ShareButton
+                label="Share this product"
+                getText={() =>
+                  `${product.title} by ${product.brand}, ${formatPrice(product.price)}` +
+                  `${product.inStock ? '' : ' (currently unavailable)'} on ${SITE_NAME}`
+                }
+              />
+            </div>
           </div>
           <Price value={product.price} size="lg" className="mt-5" />
           <p className={`mt-2 text-base font-semibold ${product.inStock ? 'text-success' : 'text-danger'}`}>

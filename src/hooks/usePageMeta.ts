@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { useLocation } from 'react-router';
 
-export const SITE_NAME = 'Bazora';
+export const SITE_NAME = 'AllinONE';
 
-/** Sets `document.title` to "<title> | Bazora". */
+/** Sets `document.title` to "<title> | AllinONE". */
 export function useDocumentTitle(title: string): void {
   useEffect(() => {
     document.title = `${title} | ${SITE_NAME}`;

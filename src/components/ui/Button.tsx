@@ -8,7 +8,7 @@ export interface ButtonProps extends ComponentPropsWithRef<'button'> {
 
 const BASE =
   'inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-control px-4 text-sm font-semibold ' +
-  'transition-[color,background-color,border-color] disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-70';
+  'transition-[color,background-color,border-color] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50 aria-disabled:cursor-not-allowed aria-disabled:opacity-70';
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-brand text-white shadow-card hover:bg-brand-strong',

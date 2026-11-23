@@ -1,25 +1,33 @@
-import { useId, useRef } from 'react';
-import { Link } from 'react-router';
+import { useId, useMemo, useRef } from 'react';
+import { Link, useSearchParams } from 'react-router';
 import { Button, buttonClassName } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { CartIcon, TrashIcon } from '../../components/ui/icons';
 import { QuantityStepper } from '../../components/ui/QuantityStepper';
 import { Skeleton } from '../../components/ui/Skeleton';
 import { MAX_QUANTITY } from '../../cart/cartStore';
-import type { CartItem } from '../../cart/summary';
+import { parseSharedCart, serializeSharedCart, SHARED_CART_PARAM } from '../../cart/sharedCart';
+import { summarizeCart, type CartItem } from '../../cart/summary';
 import { useAnnounce } from '../../hooks/useAnnounce';
 import { useCart } from '../../hooks/useCart';
 import { useCatalogData } from '../../hooks/useCatalogData';
-import { useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
+import { SITE_NAME, useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
 import { ErrorState } from '../catalog/ErrorState';
 import { formatPrice, pluralizeProducts } from '../catalog/format';
+import { ShareButton } from '../catalog/ShareButton';
 import { StateMessage } from '../catalog/StateMessage';
 import { StorePage } from '../shell/StorePage';
+import { SharedCartNotice } from './SharedCartNotice';
 
 function CartLineRow({ item, onRemoved }: { item: CartItem; onRemoved: () => void }) {
   const { store } = useCart();
   const announce = useAnnounce();
   const { product, quantity, lineTotal } = item;
+  const remove = () => {
+    store.remove(product.id);
+    announce(`Removed ${product.title} from cart`, 100);
+    onRemoved();
+  };
   return (
     <li>
       <Card className="flex gap-4 p-3 sm:p-4">
@@ -47,6 +55,7 @@ function CartLineRow({ item, onRemoved }: { item: CartItem; onRemoved: () => voi
                 store.setQuantity(product.id, next);
                 announce(`${product.title}: quantity ${next}`, 300);
               }}
+              onRemove={remove}
             />
             <div className="min-w-24 text-right">
               <p className="text-xs font-semibold text-ink-muted">Line total</p>
@@ -56,11 +65,7 @@ function CartLineRow({ item, onRemoved }: { item: CartItem; onRemoved: () => voi
               variant="ghost"
               className="px-2"
               aria-label={`Remove ${product.title}`}
-              onClick={() => {
-                store.remove(product.id);
-                announce(`Removed ${product.title} from cart`, 100);
-                onRemoved();
-              }}
+              onClick={remove}
             >
               <TrashIcon className="size-4" />
               Remove
@@ -72,24 +77,68 @@ function CartLineRow({ item, onRemoved }: { item: CartItem; onRemoved: () => voi
   );
 }
 
-/** `/cart` (lazy-loaded add-on): lines, quantities, totals, clear, and the way to checkout. */
+/**
+ * `/cart` (lazy-loaded add-on): lines, quantities, totals, clear, and the way to checkout.
+ * The cart itself lives in storage, not the URL, so sharing it builds a link that carries
+ * the lines (`/cart?items=id:qty,...`). Opening such a link shows what was shared and lets
+ * the visitor add it; it never changes their cart on its own.
+ */
 export default function CartPage() {
-  const { products } = useCatalogData();
+  const { products, byId } = useCatalogData();
   const { store, summary, count } = useCart();
   const announce = useAnnounce();
   const headingRef = useRef<HTMLHeadingElement>(null);
   const summaryId = useId();
   const settled = products.status !== 'loading';
+  const [params, setParams] = useSearchParams();
 
   useDocumentTitle(`Your cart (${count})`);
   useFocusOnNavigation(headingRef, settled);
   const focusHeading = () => headingRef.current?.focus();
 
+  const sharedRaw = params.get(SHARED_CART_PARAM);
+  const sharedLines = useMemo(() => parseSharedCart(sharedRaw), [sharedRaw]);
+  const shared = useMemo(() => summarizeCart(sharedLines, (id) => byId?.get(id)), [sharedLines, byId]);
+
+  const dismissShared = () => {
+    const next = new URLSearchParams(params);
+    next.delete(SHARED_CART_PARAM);
+    setParams(next, { replace: true });
+    focusHeading();
+  };
+  const addShared = () => {
+    for (const item of shared.items) store.add(item.product.id, item.quantity);
+    announce(`Added ${pluralizeProducts(shared.count)} from the shared cart`, 100);
+    dismissShared();
+  };
+  const cartLink = () => {
+    const lines = summary.items.map((item) => ({ productId: item.product.id, quantity: item.quantity }));
+    return `${window.location.origin}/cart?${SHARED_CART_PARAM}=${serializeSharedCart(lines)}`;
+  };
+
   return (
     <StorePage>
-      <h1 ref={headingRef} tabIndex={-1} className="mb-6 text-2xl font-bold text-ink focus:outline-none md:text-3xl">
-        Your cart{count > 0 ? ` (${pluralizeProducts(count)})` : ''}
-      </h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-bold text-ink focus:outline-none md:text-3xl">
+          Your cart{count > 0 ? ` (${pluralizeProducts(count)})` : ''}
+        </h1>
+        {products.status === 'success' && summary.items.length > 0 && (
+          <ShareButton
+            label="Share this cart"
+            getUrl={cartLink}
+            getText={() => `My ${SITE_NAME} cart: ${pluralizeProducts(summary.count)}, ${formatPrice(summary.total)}`}
+          />
+        )}
+      </div>
+
+      {products.status === 'success' && sharedRaw !== null && (
+        <SharedCartNotice
+          shared={shared}
+          skipped={sharedLines.length - shared.items.length}
+          onAdd={addShared}
+          onDismiss={dismissShared}
+        />
+      )}
 
       {products.status === 'loading' && (
         <div className="flex flex-col gap-4">

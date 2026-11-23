@@ -4,7 +4,7 @@
  */
 
 export const MAX_QUANTITY = 10;
-export const CART_STORAGE_KEY = 'bazora.cart.v1';
+export const CART_STORAGE_KEY = 'allinone.cart.v1';
 
 export interface CartLine {
   readonly productId: string;
@@ -33,7 +33,7 @@ export interface CartStore {
   retain: (keep: (productId: string) => boolean) => void;
 }
 
-const PRODUCT_ID = /^[\w-]{1,64}$/;
+export const PRODUCT_ID = /^[\w-]{1,64}$/;
 
 /** Whole number in 0..MAX_QUANTITY; anything invalid becomes 0 (meaning "none"). */
 export function clampQuantity(quantity: number): number {

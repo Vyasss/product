@@ -7,7 +7,7 @@ export interface ScrollEntry {
   productId: string | null;
 }
 
-const STORAGE_KEY = 'bazora.scroll.v1';
+const STORAGE_KEY = 'allinone.scroll.v1';
 const MAX_ENTRIES = 50;
 
 function readAll(): Record<string, ScrollEntry> {

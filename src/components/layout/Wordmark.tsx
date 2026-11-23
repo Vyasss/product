@@ -6,7 +6,7 @@ export interface WordmarkProps {
 }
 
 /**
- * The invented store identity: a shopping-bag mark and the "bazora" wordmark, drawn for
+ * The invented store identity: a shopping-bag mark and the "AllinONE" wordmark, drawn for
  * dark backgrounds. Purely visual; the surrounding heading or link provides the name.
  */
 export function Wordmark({ compact = false, markOnlyOnPhones = false }: WordmarkProps) {
@@ -22,12 +22,12 @@ export function Wordmark({ compact = false, markOnlyOnPhones = false }: Wordmark
         <circle cx="20" cy="23.5" r="2.2" className="fill-accent" />
       </svg>
       <span className={`${markOnlyOnPhones ? 'hidden md:flex' : 'flex'} flex-col leading-none`}>
-        <span className="text-2xl font-extrabold tracking-tight text-white">
-          bazora<span className="text-accent">.</span>
+        <span className="font-display text-2xl font-bold tracking-tight text-white">
+          Allin<span className="text-accent">ONE</span>
         </span>
         {!compact && (
-          <span className="mt-1 hidden text-[0.6875rem] font-medium tracking-wide text-header-muted md:block">
-            everyday marketplace
+          <span className="mt-1 hidden text-[0.6875rem] font-medium tracking-[0.14em] text-header-muted uppercase md:block">
+            everything in one place
           </span>
         )}
       </span>

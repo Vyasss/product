@@ -4,6 +4,7 @@ import { FilterIcon } from '../../components/ui/icons';
 import type { FilterPatch, FilterState, SortKey } from '../../domain/filters';
 import { ActiveFilterChips } from './ActiveFilterChips';
 import { pluralizeResults } from './format';
+import { ShareButton } from './ShareButton';
 import { SortSelect } from './SortSelect';
 
 export interface ResultSummaryProps {
@@ -71,11 +72,15 @@ export const ResultSummary = memo(function ResultSummary({
         <h2
           ref={headingRef}
           tabIndex={-1}
-          className="min-w-0 truncate text-base font-bold text-ink tabular-nums md:text-lg"
+          className="min-w-0 flex-1 truncate text-base font-bold text-ink tabular-nums md:text-lg"
         >
           <Heading status={status} total={total} query={query} />
         </h2>
-        <div className="flex items-center gap-2">
+        {/* Phones: Share sits beside the count and the controls take the next line. Wider: one row. */}
+        <div className="md:order-last">
+          <ShareButton compact />
+        </div>
+        <div className="flex max-w-full items-center gap-2 max-md:basis-full max-[359px]:flex-wrap">
           <Button className="lg:hidden" onClick={onOpenFilters}>
             <FilterIcon className="size-4" />
             Filters{filterCount > 0 ? ` (${filterCount})` : ''}

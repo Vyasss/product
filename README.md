@@ -1,7 +1,7 @@
-# Product Catalog ("bazora" storefront)
+# Product Catalog ("AllinONE" storefront)
 
 A React + TypeScript single-page app that searches, filters and sorts 5,000 products in the
-browser, presented as an invented storefront called **bazora**. Filter state lives in the URL,
+browser, presented as an invented storefront called **AllinONE**. Filter state lives in the URL,
 every control works from the keyboard, and the build is a static bundle for S3 + CloudFront.
 On top of the brief's catalog it has product pages, a cart, Buy now and a demo checkout.
 
@@ -84,7 +84,7 @@ the brief's eight fields, and the mock API returns exactly that shape.
 | No lag typing or rendering large lists; justified strategy; no redundant re-renders | Row virtualisation, deferred search, memoised cards, cheap per-card cart subscription | `ProductGrid.tsx`, `ProductCard.tsx` | `npm run bench`, `npm run perf`, e2e DOM-count test |
 | Client-side routing on S3 + CloudFront with fallback to `/index.html` | CloudFront Function rewrites extension-less paths (`/product/p-00042`, `/cart`, `/checkout`) | `infra/cloudfront/spa-rewrite.js`, `src/app/router.tsx` | e2e `cloudfront.spec.ts` (runs the function in a VM), e2e deep-link reloads |
 | No hardcoded secrets; `VITE_*` config | One module reads `import.meta.env` and validates it | `src/config/env.ts`, `.env.example` | `env.test.ts` |
-| Vitest + RTL tests: core filter/sort logic and a user flow | 362 tests in 16 files | `src/**/*.test.ts(x)` | `npm test` |
+| Vitest + RTL tests: core filter/sort logic and a user flow | 391 tests in 18 files | `src/**/*.test.ts(x)` | `npm test` |
 | README with setup, architecture, performance, CloudFront notes, improvements | This file | `README.md` | n/a |
 
 ### Add-ons beyond the brief
@@ -126,13 +126,18 @@ For a query the engine does, in order:
    for "the" instead of silently returning 5,000 products.
 2. **Strict match.** Every remaining word (or one of its aliases) must appear. If anything
    matches, that is the result and nothing else runs.
-3. **Typo correction.** Each word that matches no product at all is replaced by the closest
-   catalog word (titles, brands and alias keys, built once with the index):
-   Damerau-Levenshtein distance 1 for 4–7 letters, 2 for 8 or more, none for shorter words;
-   ties go to the word in more products, then alphabetical.
-4. **Unknown words.** Words with no close match are dropped and the search runs again.
+3. **Run-together words.** A word that matches no product at all is split when it is two
+   catalog words joined: "smarttv" becomes "smart tv", "yogamat" becomes "yoga mat".
+4. **Typo correction.** Otherwise it is replaced by the closest catalog word (titles, brands
+   and alias keys, built once with the index): Damerau-Levenshtein distance 1 for 4 letters,
+   2 for 5–8, 3 for 9 or more, none for shorter words; ties go to the word in more products,
+   then alphabetical. "shooz" finds shoes.
+5. **Sounds alike.** If nothing is that close, a rough phonetic key (ph→f, soft c→s, z→s,
+   vowels after the first letter dropped, repeats collapsed) is compared, so "hedfones" finds
+   headphones. Latin script only; keys under three letters never match.
+6. **Unknown words.** Words with no match by any of these are dropped and the search runs again.
 
-When steps 3–4 change the result, a note appears above the results and in the live region,
+When steps 3–6 change the result, a note appears above the results and in the live region,
 for example `Showing results for “running shoes” (corrected from “runing shoez”)` or
 `Showing results for “smart tv” — ignored: “xyzabc”`. The URL and the search box keep exactly
 what was typed; the relaxation is derived, and the result object carries the corrections so
@@ -168,8 +173,19 @@ the UI does not recompute them. If no word matches anything, the normal empty st
   `/checkout` goes to the cart's empty state.
 - **Unavailable products**: Add to cart and Buy now are disabled, with the reason in text
   ("Currently unavailable", linked with `aria-describedby`).
-- **Phone list cards** carry Add to cart only (two buttons do not fit next to the price at
-  390 px); Buy now is on the product page. Grid cards carry both.
+- **Phone list cards** carry both buttons too, on their own row under the price; the stock
+  line sits beside the price with the short label "Out of stock". Checked at 390, 360 and
+  320 px: content fits the fixed card height and nothing scrolls sideways.
+
+### Sharing a view
+
+The brief asks that sharing the URL restores the exact filtered view. That is met by the URL
+itself: the address bar always holds the full filter state, so copying it is enough. As an
+add-on, a **Share** button in the results bar makes that explicit: on touch devices it opens
+the system share sheet, elsewhere it copies the link and confirms with "Copied" and a
+live-region message. It reads the address bar when pressed, so it shares exactly what a
+reload would restore. The share sheet and clipboard APIs need HTTPS; on plain HTTP a legacy
+copy is tried, and if that fails the message says to copy from the address bar.
 
 ![Product page at 1440 px](docs/screenshots/product-1440.png)
 
@@ -202,16 +218,23 @@ through. The product page labels them as generated demo content.
 ## UI and design system
 
 The UI follows shopping-site conventions (strong search bar, dense grid, filter sidebar,
-results bar, chips) with its own identity: the store **bazora**, a shopping-bag mark, a deep
-teal and mint palette, the system font stack. No third-party brand assets, fonts, icons or
-images, and nothing is fetched from a CDN.
+results bar, chips) with its own identity: the store **AllinONE**, a shopping-bag mark, and a
+deep plum, warm ivory and blush-rose palette chosen so it does not resemble any well-known
+shopping site. Type is Inter for the interface and Playfair Display for the wordmark and page
+headings; both are open-source fonts bundled with the app (`@fontsource-variable/*`, dev
+dependencies), so nothing is fetched from a CDN and the system stack shows until they load.
+The Latin files are about 48 KB and 38 KB; other scripts load only if a page uses them. No
+third-party brand assets, icons or images.
+
+The screenshots in `docs/screenshots/` were taken before this rebrand and still show the
+earlier name and colours; regenerate them with `npm run screenshots`.
 
 | Area | What it looks like |
 |---|---|
 | Header | Sticky dark bar: wordmark (bag mark only on phones), visible "Search products" label, search field with icon and Clear button, cart link with count badge. One compact row on phones (72 px). |
 | Results bar | "N results for “q”", Filters button (below 1024 px), Sort select, relaxation note, chips and Clear all. Sticky under the header from 768 px up; on phones it scrolls away so the pinned area stays at 72 px. |
 | Filter sidebar | Card with Category, Price and Availability sections and right-aligned facet counts; stays in view. Below 1024 px the same panel opens in a drawer with a sticky "Show N results" button. |
-| Product card | Tinted illustration with category badge, brand, two-line title link, two-line description, star rating with review count, price with a raised ₹, stock line, Add to cart and Buy now. Restrained hover (shadow, title underline, small image zoom only without reduced motion). Fixed height: 26.5 rem in the grid, 14 rem in the phone list layout; all text clamps. |
+| Product card | Tinted illustration with category badge, brand, two-line title link, two-line description, star rating with review count, price with a raised ₹, stock line, Add to cart and Buy now. Hover on pointer devices only: a 2 px lift, tinted border, tighter shadow, title colour and a small image zoom (lift and zoom skipped for reduced motion); touch screens get pressed feedback on buttons instead and never a stuck hover. Fixed height: 26.5 rem in the grid, 15.5 rem in the phone list layout; all text clamps. Checked at 390, 360 and 320 px. |
 | Pages | Product page, cart, checkout, confirmation and 404 share one layout with a header search that opens the catalog. |
 | States | Shimmer skeletons matching both card layouts; empty and error states with an illustration and one action. |
 
@@ -231,28 +254,28 @@ switched off (`--color-*: initial`), so only token colours exist.
 
 | Group | Tokens |
 |---|---|
-| Text | `ink` #17202b, `ink-muted` #4f5b67 |
-| Surfaces and lines | `surface` #f2f4f3, `card` #ffffff, `tint` #e8f0ee, `line` #dde3e1, `line-strong` #7d8a92 |
-| Brand | `brand` #0f6b62, `brand-strong` #0a524b, `brand-soft` #e1f1ed, `brand-ink` #0b5c54, `header` #10302d, `header-muted` #b7d4cf, `accent` #7fdcc1, `accent-strong` #5ccfae |
-| Status | `success` #17763a, `danger` #b3261e, `danger-soft` #fdecea, `warn-soft` / `warn-ink`, `star` #b9770e, `star-empty` #cfd6d4 |
+| Text | `ink` #1b1b22, `ink-muted` #565863 |
+| Surfaces and lines | `surface` #f7f5f0, `card` #ffffff, `tint` #f0ebe6, `line` #e3ded3, `line-strong` #857f73 |
+| Brand | `brand` #4b2a7b, `brand-strong` #3a1f61, `brand-soft` #efeaf7, `brand-ink` #45267a, `header` #1f1433, `header-muted` #d3c8e6, `accent` #f2c6cf, `accent-strong` #e8adb9 |
+| Status | `success` #17663a, `danger` #a3261e, `danger-soft` #fbeceb, `warn-soft` / `warn-ink`, `star` #a66f17, `star-empty` #d8d3c8 |
 | Interaction | `focus` #1f5fd1 (ring on light surfaces; `accent` on the dark header and footer), `overlay`, `skeleton`, `skeleton-shine` |
-| Shape, depth, type | `radius-control`, `radius-card`, `shadow-card`, `shadow-raised`, `shadow-header`, `font-sans`, `animate-shimmer` |
+| Shape, depth, type | `radius-control`, `radius-card`, `shadow-card`, `shadow-hover`, `shadow-raised`, `shadow-header`, `font-sans`, `font-display`, `animate-shimmer` |
 
 Contrast, computed from the hex values (and checked on rendered pages by axe in real Chrome,
 which found no violations):
 
 | Pair | Ratio |
 |---|---:|
-| `ink` on `card` / `surface` / `tint` | 16.43 / 14.88 / 14.19 |
-| `ink-muted` on `card` / `surface` / `tint` | 6.94 / 6.28 / 5.99 |
-| white on `brand` (primary button) / `brand-strong` (hover) | 6.36 / 9.05 |
-| `ink` on `accent` (Buy now) / `accent-strong` (hover) | 10.10 / 8.60 |
-| `brand-ink` on `card` / `surface` / `brand-soft` | 7.86 / 7.11 / 6.74 |
-| white / `header-muted` on `header` | 14.16 / 8.99 |
-| `success` on `card`; `danger` on `card` / `danger-soft` | 5.69; 6.54 / 5.72 |
-| `warn-ink` on `warn-soft` (demo notice, mock panel) | 7.36 |
-| Focus ring `focus` on `card` / `surface`; `accent` on `header` (non-text, 3:1 needed) | 5.81 / 5.26 / 8.71 |
-| Input border, filled star on `card` (non-text) | 3.55, 3.68 |
+| `ink` on `card` / `surface` | 17.12 / 15.72 |
+| `ink-muted` on `card` / `surface` / `tint` / `brand-soft` | 7.07 / 6.49 / 5.97 / 5.98 |
+| white on `brand` (primary button) / `brand-strong` (hover) | 10.96 / 13.56 |
+| `ink` on `accent` (Buy now) / `accent-strong` (hover) | 11.21 / 9.06 |
+| `brand-ink` on `card` / `surface` / `brand-soft` / `tint` | 11.59 / 10.64 / 9.82 / 9.79 |
+| white / `header-muted` on `header` | 17.41 / 10.92 |
+| `success` on `card`; `danger` on `card` / `danger-soft` | 7.00; 7.36 / 6.41 |
+| `warn-ink` on `warn-soft` (demo notice, mock panel) | 7.17 |
+| Focus ring `focus` on `card` / `surface`; `accent` on `header` (non-text, 3:1 needed) | 5.81 / 5.33 / 11.40 |
+| Input border on `card`, filled star on `card` / `tint` (non-text) | 3.98, 4.28 / 3.61 |
 
 ### Primitives
 
@@ -414,7 +437,7 @@ words are derived from `q`, never written back. Cart state is not in the URL. Ot
 - Ratings, prices and the cart badge have one plain screen-reader text each ("Rated 4.3 out
   of 5 from 1,284 reviews", "₹1,249", "Cart, 2 items"); decorative icons are `aria-hidden`;
   stock is stated in text.
-- Focus ring 3 px, blue on light surfaces and mint on the dark header, never animated
+- Focus ring 3 px, blue on light surfaces and blush on the dark header, never animated
   (components transition colour, background and border only); 44 px touch targets; motion only
   without `prefers-reduced-motion`.
 - axe-core in real Chrome found no violations on: catalog, filtered catalog, phone list, empty,
@@ -447,7 +470,7 @@ Nothing has been deployed. The files in `infra/cloudfront/` have not been run ag
 
 ## Tests
 
-`npm test`: **362 tests in 16 files** (Vitest, jsdom, React Testing Library, user-event):
+`npm test`: **391 tests in 18 files** (Vitest, jsdom, React Testing Library, user-event):
 generator (determinism, checksum, price spread, illustrations for every item type), mock
 service, engine filters and sorts, conversational search (stop words, fallback, typo table
 including brand typos, short-token and correct-query cases), URL codec, smart-search phrases,
@@ -495,8 +518,8 @@ checkout interactions, and an axe scan.
 
 Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 
-- `npm run typecheck`, `npm run lint` exit 0; `npm test` 362 passed in 16 files;
-  `npm run e2e` 45 passed in real Chrome, including axe on every main page.
+- `npm run typecheck`, `npm run lint` exit 0; `npm test` 391 passed in 18 files;
+  `npm run e2e` 50 passed in real Chrome, including axe on every main page.
 - Build: main JS 372.26 kB (119.90 kB gzip), CSS 33.08 kB (7.45 kB gzip); lazy chunks
   ProductPage 6.30 kB (2.52 kB gzip), CheckoutPage 5.48 kB (2.44 kB gzip), CartPage 4.52 kB
   (1.74 kB gzip), QuantityStepper 1.26 kB, ConfirmationPage 1.25 kB.

@@ -33,7 +33,7 @@ export function StorePage({ children, width = 'wide' }: StorePageProps) {
       <SiteHeader
         brand={
           <Link to="/" className="block rounded-control">
-            <span className="sr-only">Bazora home</span>
+            <span className="sr-only">AllinONE home</span>
             <span aria-hidden="true">
               <Wordmark markOnlyOnPhones />
             </span>

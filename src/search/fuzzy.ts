@@ -29,11 +29,16 @@ export function editDistance(a: string, b: string, max: number): number {
   return d[a.length]?.[b.length] ?? max + 1;
 }
 
-/** Allowed edits by token length: none under 4 characters, 1 for 4 to 7, 2 for 8 or more. */
+/**
+ * Allowed edits by token length: none under 4 characters, 1 for 4, 2 for 5 to 8, 3 for 9 or
+ * more. Generous on purpose ("shooz" is two edits from "shoes"): correction only runs when the
+ * strict search found nothing, and the UI always says what was corrected.
+ */
 export function maxEditsFor(token: string): number {
   const length = [...token].length;
   if (length < 4) return 0;
-  return length >= 8 ? 2 : 1;
+  if (length === 4) return 1;
+  return length >= 9 ? 3 : 2;
 }
 
 export interface VocabularyWord {
@@ -60,6 +65,74 @@ export function closestWord(token: string, vocabulary: readonly VocabularyWord[]
       (distance === best.distance && (frequency > best.frequency || (frequency === best.frequency && word < best.word)))
     ) {
       best = { word, distance, frequency };
+    }
+  }
+  return best?.word ?? null;
+}
+
+/**
+ * Split a run-together token into two catalog words ("smarttv" -> ["smart", "tv"]). Both
+ * parts must be vocabulary words of at least two characters. When several splits work, the
+ * one whose rarer part is most common wins, then the earliest split, so it is deterministic.
+ * Null when no split works.
+ */
+export function splitCompound(
+  token: string,
+  frequencyOf: ReadonlyMap<string, number>,
+): [string, string] | null {
+  const chars = [...token];
+  let best: { parts: [string, string]; score: number } | null = null;
+  for (let i = 2; i <= chars.length - 2; i++) {
+    const left = chars.slice(0, i).join('');
+    const right = chars.slice(i).join('');
+    const leftFrequency = frequencyOf.get(left);
+    const rightFrequency = frequencyOf.get(right);
+    if (leftFrequency === undefined || rightFrequency === undefined) continue;
+    const score = Math.min(leftFrequency, rightFrequency);
+    if (best === null || score > best.score) best = { parts: [left, right], score };
+  }
+  return best?.parts ?? null;
+}
+
+/**
+ * Rough "sounds like" key for Latin-script words: common spelling variants are unified
+ * (ph -> f, ck/q -> k, soft c -> s, z -> s, x -> ks), vowels after the first letter are
+ * dropped and repeated letters collapsed. "hedfones" and "headphones" both give "hdfns".
+ * Null for words with other scripts or digits, where this makes no sense.
+ */
+export function soundKey(word: string): string | null {
+  if (!/^[a-z-]+$/.test(word)) return null;
+  const unified = word
+    .replace(/-/g, '')
+    .replace(/ph/g, 'f')
+    .replace(/ck/g, 'k')
+    .replace(/q/g, 'k')
+    .replace(/c(?=[eiy])/g, 's')
+    .replace(/c/g, 'k')
+    .replace(/z/g, 's')
+    .replace(/x/g, 'ks');
+  const first = unified.charAt(0);
+  const rest = unified.slice(1).replace(/[aeiouy]/g, '');
+  return (first + rest).replace(/(.)\1+/g, '$1');
+}
+
+/**
+ * Vocabulary word that sounds like the token, for misspellings too far for edit distance
+ * ("hedfones"). Keys shorter than three letters are too vague and never match. Ties: more
+ * products, then alphabetical. Null when nothing sounds alike.
+ */
+export function closestBySound(token: string, vocabulary: readonly VocabularyWord[]): string | null {
+  const key = soundKey(token);
+  if (key === null || key.length < 3) return null;
+  let best: VocabularyWord | null = null;
+  for (const entry of vocabulary) {
+    if (entry.word === token || soundKey(entry.word) !== key) continue;
+    if (
+      best === null ||
+      entry.frequency > best.frequency ||
+      (entry.frequency === best.frequency && entry.word < best.word)
+    ) {
+      best = entry;
     }
   }
   return best?.word ?? null;
