@@ -5,7 +5,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 /**
- * Import boundaries that encode the dependency direction from PLAN.md section 3:
+ * Import boundaries that encode the dependency direction between the source folders:
  * domain <- data, search, smart-search, url <- hooks <- features <- app.
  */
 const REACT = ['react', 'react-dom', 'react-dom/*', 'react-router', '@tanstack/*'];

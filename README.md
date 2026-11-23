@@ -226,9 +226,6 @@ dependencies), so nothing is fetched from a CDN and the system stack shows until
 The Latin files are about 48 KB and 38 KB; other scripts load only if a page uses them. No
 third-party brand assets, icons or images.
 
-The screenshots in `docs/screenshots/` were taken before this rebrand and still show the
-earlier name and colours; regenerate them with `npm run screenshots`.
-
 | Area | What it looks like |
 |---|---|
 | Header | Sticky dark bar: wordmark (bag mark only on phones), visible "Search products" label, search field with icon and Clear button, cart link with count badge. One compact row on phones (72 px). |
