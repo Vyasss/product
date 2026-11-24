@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run typecheck && vite build",
+    "build:previews": "node scripts/product-previews.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

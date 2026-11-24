@@ -6,9 +6,10 @@
     <meta name="description" content="Search, filter and sort a catalog of 5,000 products." />
     <!--
       Link previews (WhatsApp, Teams, email clients). Preview fetchers read this HTML and do not
-      run JavaScript, so every URL of this single-page app shows this one site-level card.
+      run JavaScript, so this is the card for every URL except product pages, which get their
+      own copy of this file from scripts/product-previews.mjs.
       __SITE_URL__ is replaced at build time with VITE_SITE_URL (see vite.config.ts): preview
-      images must be absolute URLs. Per-product cards would need per-URL HTML (see README).
+      images must be absolute URLs.
     -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="AllinONE" />

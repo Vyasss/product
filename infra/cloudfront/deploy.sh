@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
-# Deploy dist/ to S3 behind CloudFront. Written for this project; NOT executed by it.
+# Deploy dist/ to S3 behind CloudFront.
 #
 # Usage: S3_BUCKET=my-bucket CLOUDFRONT_DISTRIBUTION_ID=E123ABC ./infra/cloudfront/deploy.sh
+#
+# Run `npm run build` first, then `npm run build:previews` if product links should show their
+# own preview card; those pages are uploaded in step 2 with the other no-cache files.
 #
 # Order matters:
 #   1. Hashed assets first, cached for a year as immutable. New filenames never collide with

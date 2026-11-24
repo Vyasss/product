@@ -5,6 +5,8 @@ browser, presented as an invented storefront called **AllinONE**. Filter state l
 every control works from the keyboard, and the build is a static bundle for S3 + CloudFront.
 On top of the brief's catalog it has product pages, a cart, Buy now and a demo checkout.
 
+**Live demo:** https://d3t07ggz1uw32y.cloudfront.net (S3 + CloudFront, mock data).
+
 ![Desktop catalog at 1440 px: sticky header with search and cart, filter sidebar, results bar with chips, product grid](docs/screenshots/catalog-1440.png)
 
 - [Quick start](#quick-start)
@@ -109,6 +111,7 @@ feature flags off; the core interaction tests run with both flags off.
 | Search suggestions and recent searches | Completes what is being typed with phrases from the catalog ("sma" offers smart watch, smart tv, smartphone) and offers the last five searches again. Typing still filters instantly; nothing is selected unless picked | `src/search/suggest.ts`, `src/search/recentSearches.ts`, `useSearchSuggestions.ts`; omit the `suggestions` prop on `<SearchBox>`. |
 | Share button (catalog, product page, cart) and shared cart links | The brief only needs the URL to be shareable, which it is; the button makes that visible, and `/cart?items=` lets a cart be shared although carts live in storage | `ShareButton.tsx`, `shareLink.ts`, `src/cart/sharedCart.ts`, `SharedCartNotice.tsx`; delete `<ShareButton>`. |
 | Link-preview tags and image (`VITE_SITE_URL`) | A shared link shows a site card in chat apps once deployed | Tags in `index.html`, `public/og-image.png`, `siteUrl` plugin in `vite.config.ts`. |
+| Per-product link previews (`npm run build:previews`) | A shared product link shows that product's name, price, rating and stock, not the site card | `scripts/product-previews.mjs` writes one HTML file per product; the CloudFront function serves it. Optional: the app works the same without it. |
 | Bundled fonts (Inter, Playfair Display) and the AllinONE identity | A more polished storefront; self-hosted, no CDN | Remove the two imports in `main.tsx`; the system stack takes over. |
 | 29 bundled product illustrations | Every item type shows a picture of that kind of item | `src/assets/thumbnails/`, `src/data/thumbnails.ts`. |
 | Playwright e2e suite (dev only) | Verifies in real Chrome what jsdom cannot: layout, scrolling, Back/Forward, focus rings, contrast via axe | `e2e/`, `playwright.config.ts`, `npm run e2e`. Not in CI (Chrome on CI runners not verified from here). |
@@ -527,20 +530,40 @@ public; there are no secrets. `VITE_API_BASE_URL` (real API), `VITE_MOCK_FAIL_RA
 
 ## Deploying to S3 + CloudFront
 
-Nothing has been deployed. The files in `infra/cloudfront/` have not been run against AWS.
+The demo at https://d3t07ggz1uw32y.cloudfront.net is deployed this way.
 
-1. `npm ci && npm run build` with any `VITE_*` variables set.
-2. Private S3 bucket with Origin Access Control.
-3. Attach `infra/cloudfront/spa-rewrite.js` as a viewer-request CloudFront Function: paths
-   without a file extension go to `/index.html`. **The deep links `/product/p-00042`, `/cart`,
-   `/checkout` and unknown paths are what exercise this fallback**; files such as
-   `/assets/x.js` pass through, so a missing asset stays a real 404. The function is run in a
-   VM by `e2e/cloudfront.spec.ts` against those sample paths.
-4. Cache policy without query strings in the key; compression on.
-5. `infra/cloudfront/deploy.sh`: hashed assets with a one-year immutable cache first, then
-   `index.html` with `no-cache`, then invalidate `/index.html`; old assets kept.
-6. Response headers policy with HSTS, nosniff, referrer policy, frame denial and a CSP tested
-   in report-only mode first.
+1. `npm ci && npm run build` with any `VITE_*` variables set. `VITE_SITE_URL` is the public
+   address (link-preview images must be absolute URLs).
+2. Optional: `npm run build:previews` writes `dist/product/<id>.html` for every product, the
+   same app shell with that product's name, price, rating and stock in its preview tags.
+   Preview fetchers (WhatsApp, Teams, email) do not run JavaScript, so without this step
+   every link shows the site-level card.
+3. Private S3 bucket, all public access blocked, read only by the distribution through Origin
+   Access Control. The bucket policy also allows `s3:ListBucket` to the distribution, so a
+   missing file is a 404 and not a 403.
+4. Attach `infra/cloudfront/spa-rewrite.js` as a viewer-request CloudFront Function:
+   - `/product/p-00042` is served from `/product/p-00042.html`; ids outside the catalog go to
+     `/index.html`, where the app shows "Product not found". Set `PRODUCT_PAGES` in the
+     function to 0 if step 2 was skipped.
+   - Other paths without a file extension (`/`, `/cart`, `/checkout`, unknown paths) go to
+     `/index.html`.
+   - Files such as `/assets/x.js` pass through, so a missing asset stays a real 404.
+
+   The function is run in a VM by `e2e/cloudfront.spec.ts` against sample paths.
+5. Cache policy without query strings in the key (managed `CachingOptimized`); compression
+   on; HTTP redirected to HTTPS.
+6. `infra/cloudfront/deploy.sh`: hashed assets with a one-year immutable cache first, then
+   the other files and `index.html` with `no-cache`, then invalidate `/index.html`; old
+   assets kept.
+7. Response headers: the demo uses the managed `SecurityHeadersPolicy` (HSTS, nosniff,
+   referrer policy, frame protection). A Content-Security-Policy is not set; it should be
+   added in report-only mode first.
+
+Checked on the live demo: catalog, product and cart deep links load and reload in Chrome with
+no console errors; a product URL returns its own preview tags; an unknown product id shows
+the app's not-found page; a missing asset returns 404; the bucket URL itself returns 403.
+The demo was uploaded with the same commands as `deploy.sh` run by hand on Windows; the
+script file itself has not been run.
 
 ## Tests
 
@@ -554,7 +577,7 @@ cart summary, checkout validation, related products, star rating, price formatti
 helpers (columns, layout, pinned focused row), catalog interactions (flags off), cart/product/
 checkout interactions, and an axe scan.
 
-`npm run e2e`: **45 tests in real Chrome** (about 1.2 minutes):
+`npm run e2e`: **69 tests in real Chrome** (about 1.3 minutes):
 - **Journeys:** keyboard-only (search, category, price, sort, clear all) with the URL and count
   asserted at each step; conversational and typo search; reload and Back/Forward; no history
   flooding.
@@ -593,7 +616,8 @@ checkout interactions, and an axe scan.
 Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 
 - `npm run typecheck`, `npm run lint` exit 0; `npm test` 472 passed in 23 files;
-  `npm run e2e` 63 passed in real Chrome, including axe on every main page.
+  `npm run e2e` 69 passed in real Chrome, including axe on every main page.
+- The S3 + CloudFront deployment: see the checks listed under "Deploying to S3 + CloudFront".
 - Build: main JS 319.38 kB (102.69 kB gzip), CSS 39.31 kB (8.59 kB gzip); lazy chunks
   StorePage 59.56 kB (21.23 kB gzip, shared by the product, cart and checkout pages),
   CartPage 7.12 kB (2.71 kB gzip), ProductPage 6.56 kB (2.61 kB gzip), CheckoutPage 5.53 kB
@@ -612,5 +636,6 @@ Not verified:
 - A real phone (only throttled desktop Chrome).
 - A screen reader (NVDA, VoiceOver, TalkBack): accessible names and live-region texts are
   tested, but not heard.
-- The AWS deployment: CloudFront, S3, `deploy.sh` and the CI workflow have never run.
+- The `deploy.sh` file as a script and the CI workflow have never run.
+- Link-preview cards as chat apps draw them: the tags were checked in the served HTML only.
 - `HttpProductService` against a live API.
