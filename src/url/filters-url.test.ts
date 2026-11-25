@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_FILTERS, type FilterState } from '../domain/filters';
-import { parseFilters, sanitizeQuery } from './parseFilters';
+import { parseFilters, parsePage, sanitizeQuery } from './parseFilters';
 import { serializeFilters, toSearchString } from './serializeFilters';
 
 const parse = (query: string) => parseFilters(new URLSearchParams(query));
@@ -117,5 +117,33 @@ describe('round trip', () => {
 describe('sanitizeQuery', () => {
   it('trims after capping so no trailing space survives', () => {
     expect(sanitizeQuery(`${'a'.repeat(99)} b`)).toBe('a'.repeat(99));
+  });
+});
+
+describe('page', () => {
+  const page = (query: string) => parsePage(new URLSearchParams(query));
+
+  it.each([
+    ['', 1],
+    ['page=2', 2],
+    ['page=84', 84],
+    ['page=0', 1],
+    ['page=-3', 1],
+    ['page=2.5', 1],
+    ['page=abc', 1],
+    ['page=%202', 1],
+    ['page=99999999', 1],
+  ])('parsePage(%j) is %i', (query, expected) => {
+    expect(page(query)).toBe(expected);
+  });
+
+  it('is written after sort and before foreign params, and omitted on page 1', () => {
+    const filters: FilterState = { ...DEFAULT_FILTERS, q: 'shoes', sort: 'price_asc' };
+    expect(serializeFilters(filters, new URLSearchParams('mockFail=1'), 3)).toBe('q=shoes&sort=price_asc&page=3&mockFail=1');
+    expect(serializeFilters(filters, new URLSearchParams('page=3'), 1)).toBe('q=shoes&sort=price_asc');
+  });
+
+  it('is not part of the filters', () => {
+    expect(parse('q=shoes&page=4')).toEqual({ ...DEFAULT_FILTERS, q: 'shoes' });
   });
 });

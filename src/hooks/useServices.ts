@@ -11,6 +11,8 @@ import type { QueryInterpreter } from '../smart-search/QueryInterpreter';
 export interface Features {
   cart: boolean;
   share: boolean;
+  /** Product detail page; off, cards are not links and the app is one page. */
+  productPage: boolean;
 }
 
 /**
@@ -31,7 +33,7 @@ export interface Services {
   queryInterpreter: QueryInterpreter | null;
   /** Non-null only when VITE_ENABLE_MOCK_CONTROLS is on and the mock service is used. */
   mockControls: MockControls | null;
-  /** VITE_FEATURE_CART and VITE_FEATURE_SHARE. */
+  /** VITE_FEATURE_CART, VITE_FEATURE_SHARE and VITE_FEATURE_PRODUCT_PAGE. */
   features: Features;
 }
 

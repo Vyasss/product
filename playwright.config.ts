@@ -5,9 +5,9 @@ import { defineConfig } from '@playwright/test';
  * browser download is needed. Not part of `npm test`; run with `npm run e2e`.
  *
  * Two production builds, each served by `vite preview` from its own folder (dist/ is left alone):
- * - "full": every storefront feature on (cart, share); most specs run here.
- * - "default": the build as shipped, with VITE_FEATURE_CART and VITE_FEATURE_SHARE unset;
- *   `default-build.spec.ts` checks that those features are absent and that the layout fits.
+ * - "full": every optional feature on (product page, cart, share); most specs run here.
+ * - "default": the build as shipped, a single catalog page with those features off;
+ *   `default-build.spec.ts` checks that they are absent and that the layout fits.
  */
 const FULL_PORT = 4190;
 const DEFAULT_PORT = 4191;
@@ -37,14 +37,14 @@ export default defineConfig({
       // Typecheck once, before the first build.
       command: `npm run typecheck && ${serve('.e2e/full', FULL_PORT)}`,
       url: `http://localhost:${FULL_PORT}`,
-      env: { VITE_FEATURE_CART: 'true', VITE_FEATURE_SHARE: 'true' },
+      env: { VITE_FEATURE_CART: 'true', VITE_FEATURE_SHARE: 'true', VITE_FEATURE_PRODUCT_PAGE: 'true' },
       reuseExistingServer: false,
       timeout: 180_000,
     },
     {
       command: serve('.e2e/default', DEFAULT_PORT),
       url: `http://localhost:${DEFAULT_PORT}`,
-      env: { VITE_FEATURE_CART: 'false', VITE_FEATURE_SHARE: 'false' },
+      env: { VITE_FEATURE_CART: 'false', VITE_FEATURE_SHARE: 'false', VITE_FEATURE_PRODUCT_PAGE: 'false' },
       reuseExistingServer: false,
       timeout: 180_000,
     },

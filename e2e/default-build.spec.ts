@@ -1,12 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
-import { runAxe, waitForCards } from './helpers';
+import { expectSearch, runAxe, waitForCards } from './helpers';
 
-// The build as shipped: VITE_FEATURE_CART and VITE_FEATURE_SHARE unset (see playwright.config.ts).
+// The build as shipped: a single catalog page, with VITE_FEATURE_PRODUCT_PAGE, VITE_FEATURE_CART
+// and VITE_FEATURE_SHARE unset (see playwright.config.ts).
 
 /**
  * Space between each card's last line and its bottom edge. Every card must keep its 12px
- * bottom padding (nothing cut off) and have little more (the cards are shorter without the
- * cart buttons, not just emptier).
+ * bottom padding (nothing cut off) and have little more (the cards are sized for what they
+ * show, not just emptier).
  */
 async function cardFit(page: Page): Promise<{ minGap: number; maxGap: number; cards: number }> {
   const gaps = await page.locator('[role="listitem"]').evaluateAll((cards) =>
@@ -20,11 +21,13 @@ async function cardFit(page: Page): Promise<{ minGap: number; maxGap: number; ca
 }
 
 for (const width of [1440, 768, 390, 320]) {
-  test(`${width}px: no cart or share controls, and the shorter cards fit their content`, async ({ page }) => {
+  test(`${width}px: cards show the product fields only, and fit their content`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await page.goto('/?q=shoes');
     await waitForCards(page);
 
+    const firstCard = page.locator('[role="listitem"]').first();
+    await expect(firstCard.getByRole('link')).toHaveCount(0);
     await expect(page.getByRole('link', { name: /^Cart/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /^(Add to cart|Buy now|Share)/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Clear all filters' })).toBeVisible();
@@ -37,25 +40,34 @@ for (const width of [1440, 768, 390, 320]) {
   });
 }
 
-test('product page has no purchase or share controls, and no accessibility violations', async ({ page }) => {
-  await page.goto('/product/p-00002');
-  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Highlights' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^(Add to cart|Buy now|Share)/ })).toHaveCount(0);
-  await expect(page.getByRole('spinbutton')).toHaveCount(0);
-  await expect(page.locator('[role="listitem"]').first()).toBeVisible();
-  const fit = await cardFit(page);
-  expect(fit.minGap).toBeGreaterThanOrEqual(12);
-  expect(fit.maxGap).toBeLessThanOrEqual(16);
-  expect(await runAxe(page)).toEqual([]);
-});
-
-for (const path of ['/cart', '/cart?items=p-00001:2', '/checkout']) {
+for (const path of ['/product/p-00002', '/cart', '/cart?items=p-00001:2', '/checkout']) {
   test(`${path} shows the not-found page`, async ({ page }) => {
     await page.goto(path);
     await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
   });
 }
+
+test('?mockFail=1: the simulated API failure shows the error state, and Retry recovers', async ({ page }) => {
+  await page.goto('/?mockFail=1');
+  const retry = page.getByRole('button', { name: 'Retry' });
+  await expect(retry).toBeVisible();
+  await expect(retry).toBeFocused();
+  expect(await runAxe(page)).toEqual([]);
+  await retry.click();
+  await waitForCards(page);
+});
+
+test('a brand that is not in the catalog offers the catalog brands; one click searches it', async ({ page }) => {
+  await page.goto('/?q=samsung');
+  await expect(page.getByText('Brands in this catalog')).toBeVisible();
+  const brands = page.getByRole('list').filter({ has: page.getByRole('button', { name: 'Sonique' }) }).getByRole('button');
+  // Two brands from each of the five categories.
+  await expect(brands).toHaveCount(10);
+  await page.getByRole('button', { name: 'Sonique' }).click();
+  await expectSearch(page, '?q=Sonique');
+  await waitForCards(page);
+  await expect(page.locator('[role="listitem"]').first()).toContainText('Sonique');
+});
 
 test('catalog has no accessibility violations', async ({ page }) => {
   await page.goto('/');

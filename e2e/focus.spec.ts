@@ -2,7 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 import { tabTo, waitForCards } from './helpers';
 
 const FOCUS_BLUE = 'rgb(31, 95, 209)'; // --color-focus, light surfaces
-const ACCENT = 'rgb(242, 198, 207)'; // --color-accent, dark header and footer
+const ACCENT = 'rgb(143, 208, 242)'; // --color-accent, dark header and footer
 
 async function outlineOf(target: Locator) {
   return target.evaluate((element) => {

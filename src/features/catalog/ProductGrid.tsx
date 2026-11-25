@@ -10,6 +10,10 @@ export interface ProductGridProps {
   products: readonly Product[];
   /** Positions into `products`, in display order. */
   indices: readonly number[];
+  /** Position of the first card in the whole result list (61 on page 2), for aria-posinset. */
+  firstPosition?: number;
+  /** Size of the whole result list, for aria-setsize; defaults to `indices.length`. */
+  setSize?: number;
   /** Changes whenever the filters change; the window scrolls back to the list top. */
   resetKey: string;
   /** Saved position to restore once (Back/Forward), and the product link to refocus. */
@@ -18,9 +22,9 @@ export interface ProductGridProps {
 }
 
 /** Grid card height (multi-column rows) with the Add to cart / Buy now row, in rem. */
-export const CARD_HEIGHT_REM = 26.5;
+export const CARD_HEIGHT_REM = 24.125;
 /** List card height (one column: image left, details right) with the button row, in rem. */
-export const LIST_CARD_HEIGHT_REM = 15.5;
+export const LIST_CARD_HEIGHT_REM = 13.25;
 /**
  * How much shorter a card is without the Add to cart / Buy now row, so the last line sits on
  * the card's bottom padding (measured in Chrome at 1440, 390 and 320 px).
@@ -74,6 +78,8 @@ export function withPinnedRow(rows: readonly number[], pinned: number | null, co
 export const ProductGrid = memo(function ProductGrid({
   products,
   indices,
+  firstPosition = 1,
+  setSize: listSize,
   resetKey,
   restore = null,
   onOpenProduct,
@@ -177,8 +183,8 @@ export const ProductGrid = memo(function ProductGrid({
                 <ProductCard
                   key={product.id}
                   product={product}
-                  position={position + 1}
-                  setSize={total}
+                  position={firstPosition + position}
+                  setSize={listSize ?? total}
                   layout={layout}
                   {...(onOpenProduct ? { onOpen: onOpenProduct } : {})}
                 />,

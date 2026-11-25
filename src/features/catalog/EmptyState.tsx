@@ -4,6 +4,9 @@ import { StateMessage } from '../../components/ui/StateMessage';
 export interface EmptyStateProps {
   query: string;
   onClearAll: () => void;
+  /** Brands in the catalog, offered as searches when the text matched nothing. */
+  brands?: readonly string[];
+  onSearch?: (text: string) => void;
 }
 
 function EmptyIllustration() {
@@ -20,7 +23,7 @@ function EmptyIllustration() {
 }
 
 /** Shown only after a successful load that matched nothing. */
-export function EmptyState({ query, onClearAll }: EmptyStateProps) {
+export function EmptyState({ query, onClearAll, brands = [], onSearch }: EmptyStateProps) {
   return (
     <StateMessage
       illustration={<EmptyIllustration />}
@@ -36,6 +39,20 @@ export function EmptyState({ query, onClearAll }: EmptyStateProps) {
         <li>Remove a filter using the chips above the results.</li>
         <li>Widen the price range or include unavailable products.</li>
       </ul>
+      {query !== '' && onSearch && brands.length > 0 && (
+        <div className="mt-4 text-left">
+          <p className="text-sm font-semibold text-ink">Brands in this catalog</p>
+          <ul className="mt-2 flex flex-wrap gap-2">
+            {brands.map((brand) => (
+              <li key={brand}>
+                <Button className="min-h-9 px-3" onClick={() => onSearch(brand)}>
+                  {brand}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </StateMessage>
   );
 }

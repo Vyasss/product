@@ -1,19 +1,23 @@
 # Product Catalog ("AllinONE" storefront)
 
 A React + TypeScript single-page app that searches, filters and sorts 5,000 products in the
-browser, presented as an invented storefront called **AllinONE**. Filter state lives in the URL,
-every control works from the keyboard, and the build is a static bundle for S3 + CloudFront.
-On top of the brief's catalog it has product pages. A cart with Buy now and a demo checkout,
-and share buttons (WhatsApp, email, Teams), are built in but **off by default**; see
-[Configuration](#configuration).
+browser, presented as an invented storefront called **AllinONE** in the colours of Axis Max
+Life Insurance (MLI). Filter state lives in the URL, every control works from the keyboard, and
+the build is a static bundle for S3 + CloudFront.
+
+The default build is exactly the brief: **one catalog page**, and each product card shows the
+eight fields of the `Product` interface and nothing else. A product detail page, a cart with
+Buy now and a demo checkout, and share buttons are built and tested but **off by default**;
+see [Configuration](#configuration).
 
 **Live demo:** https://d3t07ggz1uw32y.cloudfront.net (S3 + CloudFront, mock data).
 
 ![Desktop catalog at 1440 px: sticky header with search and cart, filter sidebar, results bar with chips, product grid](docs/screenshots/catalog-1440.png)
 
-The screenshots in this README were taken with the cart and share features on. In the default
-build (and the live demo) the header has no cart link, cards end at the stock line, and there
-is no Share button.
+The screenshots in this README predate the MLI colours and were taken with the optional
+features on. The default build (and the live demo) uses the MLI palette below, is one page,
+has no cart link, Share button or product links, and its cards show the eight `Product` fields
+only (no description or review count).
 
 - [Quick start](#quick-start)
 - [Brief requirements and add-ons](#brief-requirements-and-add-ons)
@@ -92,7 +96,7 @@ the brief's eight fields, and the mock API returns exactly that shape.
 | No lag typing or rendering large lists; justified strategy; no redundant re-renders | Row virtualisation, deferred search, memoised cards, cheap per-card cart subscription | `ProductGrid.tsx`, `ProductCard.tsx` | `npm run bench`, `npm run perf`, e2e DOM-count test |
 | Client-side routing on S3 + CloudFront with fallback to `/index.html` | CloudFront Function rewrites extension-less paths (`/product/p-00042`, `/cart`, `/checkout`) | `infra/cloudfront/spa-rewrite.js`, `src/app/router.tsx` | e2e `cloudfront.spec.ts` (runs the function in a VM), e2e deep-link reloads |
 | No hardcoded secrets; `VITE_*` config | One module reads `import.meta.env` and validates it | `src/config/env.ts`, `.env.example` | `env.test.ts` |
-| Vitest + RTL tests: core filter/sort logic and a user flow | 482 tests in 25 files | `src/**/*.test.ts(x)` | `npm test` |
+| Vitest + RTL tests: core filter/sort logic and a user flow | 520 tests in 30 files | `src/**/*.test.ts(x)` | `npm test` |
 | README with setup, architecture, performance, CloudFront notes, improvements | This file | `README.md` | n/a |
 
 ### Add-ons beyond the brief
@@ -102,10 +106,10 @@ feature flags off; the core interaction tests run with both flags off.
 
 | Add-on | Why it was added | How to turn it off or remove it |
 |---|---|---|
-| Product page `/product/:id` (lazy chunk) | Clicking a product should show it: large illustration, details, Add to cart, Buy now, "More from this brand" / "More in <category>" | `src/features/product/`; remove the route in `src/app/router.tsx` and the title link in `ProductCard.tsx`. |
+| Product page `/product/:id` (lazy chunk) | Clicking a product should show it: large illustration, details, Add to cart, Buy now, "More from this brand" / "More in <category>" | **Off by default**; `VITE_FEATURE_PRODUCT_PAGE=true` turns it on. Off, the app is the single catalog page: card titles are not links and `/product/:id` is an unknown path (404). Code: `src/features/product/`. |
 | Cart (`CartStore`, localStorage, `/cart`) | Real add / change quantity / remove / clear, totals in INR, header badge, cross-tab sync | **Off by default**; `VITE_FEATURE_CART=true` turns it on. Off, there is no header cart link, no card buttons, no purchase panel, and `/cart` and `/checkout` are unknown paths (404). Code: `src/cart/`, `src/features/cart/`. |
 | Buy now and demo checkout `/checkout` | Completes the shopping flow from product to order confirmation. No payment step; delivery details are validated in the browser only and never stored or sent | Part of the cart feature (`VITE_FEATURE_CART`). |
-| Generated descriptions, highlights, review counts | Makes cards and product pages read like a real storefront. Mock content derived from the product, layered on top of the unchanged eight-field `Product` (see [Generated content](#generated-display-content)) | `src/data/productContent.ts` behind `ProductContentProvider`; swap for a provider that reads real API fields. |
+| Generated descriptions, highlights, review counts | Used only on the optional product page; catalog cards show the `Product` fields only. Mock content derived from the product, layered on top of the unchanged eight-field `Product` (see [Generated content](#generated-display-content)) | `src/data/productContent.ts` behind `ProductContentProvider`; swap for a provider that reads real API fields. |
 | Conversational search: stop words, unknown-word and typo fallback | "ek smart tv chahie" and "runing shoez" should find products; the strict match always wins | `src/search/stopWords.ts`, `src/search/fuzzy.ts`, `InMemorySearchEngine.ts`. Empty the stop-word list / skip `relax()` to turn off. |
 | Mixed-language aliases (joote, जूते, kitab, किताब, tv/television, earphones...) | Mixed-language shoppers type these terms | `src/search/aliases.ts`; empty `RAW_ALIASES`. |
 | React Router | URL state with history, routes for product/cart/checkout and the 404 | `src/url/useFilterState.ts`, `src/app/*`. |
@@ -118,7 +122,7 @@ feature flags off; the core interaction tests run with both flags off.
 | Share button (catalog, product page, cart) and shared cart links | The brief only needs the URL to be shareable, which it is; the button adds copy link, WhatsApp, email and Teams, and `/cart?items=` lets a cart be shared although carts live in storage | **Off by default**; `VITE_FEATURE_SHARE=true` turns it on. Off, the address bar is the share mechanism, as the brief asks. Code: `ShareButton.tsx`, `shareLink.ts`, `src/cart/sharedCart.ts`. |
 | Link-preview tags and image (`VITE_SITE_URL`) | A shared link shows a site card in chat apps once deployed | Tags in `index.html`, `public/og-image.png`, `siteUrl` plugin in `vite.config.ts`. |
 | Per-product link previews (`npm run build:previews`) | A shared product link shows that product's name, price, rating and stock, not the site card | `scripts/product-previews.mjs` writes one HTML file per product; the CloudFront function serves it. Optional: the app works the same without it. |
-| Bundled fonts (Inter, Playfair Display) and the AllinONE identity | A more polished storefront; self-hosted, no CDN | Remove the two imports in `main.tsx`; the system stack takes over. |
+| Bundled font (Inter) and the AllinONE identity in MLI colours | Brand colours as discussed with MLI; self-hosted font, no CDN | Colours are tokens in `src/index.css`; remove the font import in `main.tsx` and the system stack takes over. |
 | 29 bundled product illustrations | Every item type shows a picture of that kind of item | `src/assets/thumbnails/`, `src/data/thumbnails.ts`. |
 | Playwright e2e suite (dev only) | Verifies in real Chrome what jsdom cannot: layout, scrolling, Back/Forward, focus rings, contrast via axe | `e2e/`, `playwright.config.ts`, `npm run e2e`. Not in CI (Chrome on CI runners not verified from here). |
 | Perf and screenshot scripts (dev only) | Real throttled-Chrome numbers and reproducible docs screenshots | `scripts/perf.mjs`, `scripts/screenshots.mjs`. |
@@ -251,22 +255,28 @@ through. The product page labels them as generated demo content.
 ## UI and design system
 
 The UI follows shopping-site conventions (strong search bar, dense grid, filter sidebar,
-results bar, chips) with its own identity: the store **AllinONE**, a shopping-bag mark, and a
-deep plum, warm ivory and blush-rose palette chosen so it does not resemble any well-known
-shopping site. Type is Inter for the interface and Playfair Display for the wordmark and page
-headings; both are open-source fonts bundled with the app (`@fontsource-variable/*`, dev
-dependencies), so nothing is fetched from a CDN and the system stack shows until they load.
-The Latin files are about 48 KB and 38 KB; other scripts load only if a page uses them. No
-third-party brand assets, icons or images.
+results bar, chips) with the store name **AllinONE** and a shopping-bag mark, coloured after
+**Axis Max Life Insurance (MLI)**: burgundy `#97144d` and navy `#003974` are the two fills of
+the official MLI logo file (`axismaxlife.com/static-page/assets/homepage/axis-max-life-insurance-logo.svg`),
+and `#505662` / `#252931` are the body and badge text colours on axismaxlife.com. Navy carries
+the header and footer, burgundy the actions, links, chips and the "ONE" tab of the wordmark;
+lighter tints are derived from the two. The MLI logo itself is not used: an official logo file
+should come from MLI with permission to show it, and would replace the bag mark in
+`Wordmark.tsx`.
+
+Type is one sans-serif family, as on the MLI site: Inter, bundled with the app
+(`@fontsource-variable/inter`, about 48 KB for Latin), with Noto Sans (the MLI site's face) next
+in the font stack where it is installed. Nothing is fetched from a CDN.
 
 | Area | What it looks like |
 |---|---|
-| Header | Sticky dark bar: wordmark (bag mark only on phones), visible "Search products" label, search field with icon and Clear button, cart link with count badge. One compact row on phones (72 px). |
+| Header | Sticky navy bar: wordmark (bag mark only on phones), visible "Search products" label, search field with icon and Clear button (cart link with count badge when the cart is on). One compact row on phones (72 px). |
 | Results bar | "N results for “q”", Filters button (below 1024 px), Sort select, relaxation note, chips and Clear all. Sticky under the header from 768 px up; on phones it scrolls away so the pinned area stays at 72 px. |
 | Filter sidebar | Card with Category, Price and Availability sections and right-aligned facet counts; stays in view. Below 1024 px the same panel opens in a drawer with a sticky "Show N results" button. |
-| Product card | Tinted illustration with category badge, brand, two-line title link, two-line description, star rating with review count, price with a raised ₹, stock line, Add to cart and Buy now. Hover on pointer devices only: a 2 px lift, tinted border, tighter shadow, title colour and a small image zoom (lift and zoom skipped for reduced motion); touch screens get pressed feedback on buttons instead and never a stuck hover. Fixed height: 26.5 rem in the grid, 15.5 rem in the phone list layout; without the cart buttons 23.375 rem and 11.625 rem, so the last line sits on the bottom padding (checked in Chrome). All text clamps. Checked at 390, 360 and 320 px. |
-| Pages | Product page, cart, checkout, confirmation and 404 share one layout with a header search that opens the catalog. |
-| States | Shimmer skeletons matching both card layouts; empty and error states with an illustration and one action. |
+| Product card | The eight `Product` fields and nothing else: illustration (`thumbnailUrl`) with category badge, brand, two-line title, star rating with its value, price with a raised ₹, stock line. With the optional features on, the title is a link to the product page (with hover cues on pointer devices) and Add to cart / Buy now sit at the bottom. Fixed height: 21 rem in the grid and 9.375 rem in the phone list layout by default (24.125 and 13.25 rem with the cart buttons), so the last line sits on the bottom padding (checked in Chrome at 1440, 768, 390 and 320 px). All text clamps. |
+| Pages | One catalog page by default. With the optional features on, the product page, cart, checkout, confirmation and 404 share one layout with a header search that opens the catalog. |
+| States | Shimmer skeletons matching both card layouts; error state with Retry; empty state with Clear all and, after a search, up to ten catalog brands (two per category) to search instead, since the brands are invented and a real one such as "samsung" finds nothing. |
+| Pagination | "Showing 61–120 of 317", then Previous, numbered pages and Next; phones get "Page 3 of 6" between the arrows. |
 
 ![Phone layout at 390 px: compact header, list cards](docs/screenshots/catalog-390.png)
 
@@ -284,11 +294,11 @@ switched off (`--color-*: initial`), so only token colours exist.
 
 | Group | Tokens |
 |---|---|
-| Text | `ink` #1b1b22, `ink-muted` #565863 |
-| Surfaces and lines | `surface` #f7f5f0, `card` #ffffff, `tint` #f0ebe6, `line` #e3ded3, `line-strong` #857f73 |
-| Brand | `brand` #4b2a7b, `brand-strong` #3a1f61, `brand-soft` #efeaf7, `brand-ink` #45267a, `header` #1f1433, `header-muted` #d3c8e6, `accent` #f2c6cf, `accent-strong` #e8adb9 |
-| Status | `success` #17663a, `danger` #a3261e, `danger-soft` #fbeceb, `warn-soft` / `warn-ink`, `star` #a66f17, `star-empty` #d8d3c8 |
-| Interaction | `focus` #1f5fd1 (ring on light surfaces; `accent` on the dark header and footer), `overlay`, `skeleton`, `skeleton-shine` |
+| Text | `ink` #252931, `ink-muted` #505662 (both from axismaxlife.com) |
+| Surfaces and lines | `surface` #f4f6f9, `card` #ffffff, `tint` #eaeff5, `line` #dbe1e8, `line-strong` #7b8594 |
+| Brand (MLI) | `brand` #97144d (logo burgundy), `brand-strong` #7a1040, `brand-soft` #f7e9ef, `brand-ink` #97144d, `header` #003974 (logo navy), `header-muted` #c9d6e8, `accent` #8fd0f2, `accent-strong` #6cbfeb |
+| Status | `success` #17663a, `danger` #b3261e, `danger-soft` #fbeceb, `warn-soft` / `warn-ink`, `star` #a66f17, `star-empty` #d5dbe3 |
+| Interaction | `focus` #1f5fd1 (ring on light surfaces; `accent` on the navy header and footer), `overlay`, `skeleton`, `skeleton-shine` |
 | Shape, depth, type | `radius-control`, `radius-card`, `shadow-card`, `shadow-hover`, `shadow-raised`, `shadow-header`, `font-sans`, `font-display`, `animate-shimmer` |
 
 Contrast, computed from the hex values (and checked on rendered pages by axe in real Chrome,
@@ -296,16 +306,18 @@ which found no violations):
 
 | Pair | Ratio |
 |---|---:|
-| `ink` on `card` / `surface` | 17.12 / 15.72 |
-| `ink-muted` on `card` / `surface` / `tint` / `brand-soft` | 7.07 / 6.49 / 5.97 / 5.98 |
-| white on `brand` (primary button) / `brand-strong` (hover) | 10.96 / 13.56 |
-| `ink` on `accent` (Buy now) / `accent-strong` (hover) | 11.21 / 9.06 |
-| `brand-ink` on `card` / `surface` / `brand-soft` / `tint` | 11.59 / 10.64 / 9.82 / 9.79 |
-| white / `header-muted` on `header` | 17.41 / 10.92 |
-| `success` on `card`; `danger` on `card` / `danger-soft` | 7.00; 7.36 / 6.41 |
-| `warn-ink` on `warn-soft` (demo notice, mock panel) | 7.17 |
-| Focus ring `focus` on `card` / `surface`; `accent` on `header` (non-text, 3:1 needed) | 5.81 / 5.33 / 11.40 |
-| Input border on `card`, filled star on `card` / `tint` (non-text) | 3.98, 4.28 / 3.61 |
+| `ink` on `card` / `surface` | 14.58 / 13.47 |
+| `ink-muted` on `card` / `surface` / `tint` / `brand-soft` | 7.37 / 6.81 / 6.38 / 6.27 |
+| white on `brand` (primary button, "ONE" tab) / `brand-strong` (hover) | 8.32 / 10.63 |
+| `brand-ink` on `card` / `surface` / `brand-soft` / `tint` | 8.32 / 7.69 / 7.08 / 7.20 |
+| white / `header-muted` on `header` | 11.43 / 7.76 |
+| `success` on `card`; `danger` on `card` / `danger-soft` | 7.00; 6.54 / 5.70 |
+| `warn-ink` on `warn-soft` | 7.31 |
+| Focus ring `focus` on `card` / `surface`; `accent` on `header` (non-text, 3:1 needed) | 5.81 / 5.36 / 6.79 |
+| Input border on `card`, filled star on `card` / `tint` (non-text) | 3.73, 4.28 / 3.70 |
+
+Burgundy on navy is 1.37:1, so burgundy is never used as text or a line on the header: the
+"ONE" of the wordmark is white on a burgundy tab.
 
 ### Primitives
 
@@ -358,17 +370,22 @@ use `push`.
 
 ### Rendering strategy
 
-- **Virtualised rows, window scrolling.** `useWindowVirtualizer` over rows; column count from
-  the container width; fixed card heights, so offsets are computed. While scrolling the whole
-  list, the e2e suite saw at most 32 cards in the DOM at 1440 px and 9 at 390 px.
+- **Pages of 60, then virtualised rows.** Results are shown 60 at a time with Previous,
+  numbered pages and Next below the list (phones: "Page 3 of 6" between the arrows). 60 is a
+  whole number of rows at every column count (1 to 6). The page is in the URL (`page=3`), so a
+  shared link or a reload opens the same page, Back returns to the previous one, and any filter
+  change starts again at page 1. Pages make a position in 5,000 results easy to share and to
+  return to; within a page, `useWindowVirtualizer` still renders only the rows near the screen
+  (column count from the container width; fixed card heights, so offsets are computed). While
+  scrolling a whole page, the e2e suite saw at most 28 cards in the DOM at 1440 px and 8 at 390 px.
 - **Rows are contained.** Each row has `contain: strict` (with 6 px of padding so focus rings
   are not clipped). Rendering is batched into frames (`useFlushSync: false`). The row holding
   keyboard focus is kept mounted by a custom range extractor.
 - **Cheap cards.** `React.memo` with stable frozen products; a per-card cart subscription that
   reads one number (`useCartQuantity`); the star rating is one small SVG.
-- **Why not pagination or a Worker?** Filtering is sub-millisecond in Node and a few ms at 6x
-  throttle; the measured cost is rendering, which neither would remove. The engine sits behind
-  `SearchEngine`, so a Worker can replace it if the catalog grows a lot.
+- **Search stays on the main thread.** Filtering is sub-millisecond in Node and a few ms at
+  6x throttle; the measured cost is rendering, which a Worker would not remove. The engine sits
+  behind `SearchEngine`, so a Worker can replace it if the catalog grows a lot.
 
 ### Node bench
 
@@ -446,6 +463,7 @@ What keeps scrolling cheap, each found by profiling under throttling:
 | `minPrice` / `maxPrice` | `maxPrice=5000` | Inclusive bounds (INR) | none |
 | `inStock` | `inStock=true` | Only in-stock products | all |
 | `sort` | `sort=price_asc` | `price_asc`, `price_desc`, `rating_desc` | dataset order ("Featured") |
+| `page` | `page=3` | Result page (60 per page). A page past the end shows the last page; anything but a whole number from 1 to 10,000 is page 1. Reset to 1 when a filter changes | 1 |
 
 Parsing never throws; one view has one canonical URL (rewritten once with `replace` if not);
 foreign params (`mockFail`, `utm_*`) are preserved. Stop-word removal, corrections and ignored
@@ -523,7 +541,7 @@ previously loaded catalog.
 - Ratings, prices and the cart badge have one plain screen-reader text each ("Rated 4.3 out
   of 5 from 1,284 reviews", "₹1,249", "Cart, 2 items"); decorative icons are `aria-hidden`;
   stock is stated in text.
-- Focus ring 3 px, blue on light surfaces and blush on the dark header, never animated
+- Focus ring 3 px, blue on light surfaces and light blue on the navy header, never animated
   (components transition colour, background and border only); 44 px touch targets; motion only
   without `prefers-reduced-motion`.
 - axe-core in real Chrome found no violations on: catalog, filtered catalog, phone list, empty,
@@ -539,9 +557,14 @@ public; there are no secrets. `VITE_API_BASE_URL` (real API), `VITE_MOCK_FAIL_RA
 
 | Feature flag | Default | On means |
 |---|---|---|
+| `VITE_FEATURE_PRODUCT_PAGE` | off | Card titles link to `/product/:id` (details, related products) |
 | `VITE_FEATURE_CART` | off | Add to cart and Buy now on cards and the product page, header cart link, `/cart`, `/checkout` |
 | `VITE_FEATURE_SHARE` | off | Share buttons on the catalog, product page and cart (copy link, WhatsApp, email, Teams) |
 | `VITE_FEATURE_SMART_SEARCH` | off | "Shoes under 5000 in stock" offered as filters |
+| `VITE_ENABLE_MOCK_CONTROLS` | off | A "Simulate API failure (500)" button under the results bar |
+
+To see the error state and its Retry button on any build, add `?mockFail=1` to the URL: the
+first load fails with a simulated 500 (`?mockFail=2` fails two loads).
 
 Flags reach the UI through `Services.features` (`useFeatures()`), so a component never reads
 the environment, and tests choose features per render. A feature that is off is not rendered at
@@ -586,7 +609,7 @@ script file itself has not been run.
 
 ## Tests
 
-`npm test`: **482 tests in 25 files** (Vitest, jsdom, React Testing Library, user-event):
+`npm test`: **520 tests in 30 files** (Vitest, jsdom, React Testing Library, user-event):
 generator (determinism, checksum, price spread, illustrations for every item type), mock
 service, engine filters and sorts, conversational search (stop words, fallback, typo table
 including brand typos, short-token and correct-query cases), URL codec, smart-search phrases,
@@ -596,10 +619,15 @@ cart summary, checkout validation, related products, star rating, price formatti
 helpers (columns, layout, pinned focused row), catalog interactions (flags off), cart/product/
 checkout interactions, the default build without cart and share, and an axe scan.
 
-`npm run e2e`: **78 tests in real Chrome** (about 1.6 minutes), against two production builds
-served side by side from `.e2e/` (so `dist/` is never overwritten): 69 with the cart and share
-features on, and 9 on the default build (`default-build.spec.ts`: no cart or share controls,
-`/cart` and `/checkout` are 404, the shorter cards fit at 1440, 768, 390 and 320 px, axe).
+`npm run e2e`: **83 tests in real Chrome** (about 1.5 minutes), against two production builds
+served side by side from `.e2e/` (so `dist/` is never overwritten): 72 with the optional
+features on, and 11 on the default build (`default-build.spec.ts`: cards show the product
+fields only and fit at 1440, 768, 390 and 320 px; no links, cart or share controls;
+`/product/:id`, `/cart` and `/checkout` are 404; `?mockFail=1` shows the error state with a
+focused Retry that recovers; an unknown brand offers the catalog brands; axe).
+- **Pages:** Next page by keyboard moves focus to the results heading; reload and Back keep the
+  page in step with the URL; a shared `?page=3` opens page 3; a filter change returns to page 1;
+  compact controls at 320 px.
 - **Journeys:** keyboard-only (search, category with Space and with Enter, price, sort, clear all) with the URL and count
   asserted at each step; conversational and typo search; reload and Back/Forward; no history
   flooding.
@@ -637,8 +665,8 @@ features on, and 9 on the default build (`default-build.spec.ts`: no cart or sha
 
 Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 
-- `npm run typecheck`, `npm run lint` exit 0; `npm test` 482 passed in 25 files;
-  `npm run e2e` 78 passed in real Chrome, including axe on every main page.
+- `npm run typecheck`, `npm run lint` exit 0; `npm test` 520 passed in 30 files;
+  `npm run e2e` 83 passed in real Chrome, including axe on every main page.
 - The S3 + CloudFront deployment: see the checks listed under "Deploying to S3 + CloudFront".
 - Build: main JS 319.38 kB (102.69 kB gzip), CSS 39.31 kB (8.59 kB gzip); lazy chunks
   StorePage 59.56 kB (21.23 kB gzip, shared by the product, cart and checkout pages),

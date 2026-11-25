@@ -10,6 +10,7 @@ describe('parseConfig', () => {
       smartSearch: false,
       cart: false,
       share: false,
+      productPage: false,
     });
   });
 
@@ -22,6 +23,7 @@ describe('parseConfig', () => {
         VITE_FEATURE_SMART_SEARCH: '1',
         VITE_FEATURE_CART: 'true',
         VITE_FEATURE_SHARE: 'true',
+        VITE_FEATURE_PRODUCT_PAGE: 'true',
       }),
     ).toEqual({
       apiBaseUrl: 'https://api.example.com/v1',
@@ -30,6 +32,7 @@ describe('parseConfig', () => {
       smartSearch: true,
       cart: true,
       share: true,
+      productPage: true,
     });
   });
 

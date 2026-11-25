@@ -120,7 +120,7 @@ export const SearchBox = memo(function SearchBox({
           autoComplete="off"
           spellCheck={false}
           enterKeyHint="search"
-          placeholder="e.g. smart tv"
+          placeholder="Product or brand, e.g. smart tv or Voltix"
           className="block h-11 w-full rounded-control md:h-12 border-2 border-transparent bg-card pr-12 pl-11 text-base text-ink shadow-card placeholder:text-ink-muted focus:border-accent"
         />
         {value !== '' && (

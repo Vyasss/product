@@ -69,8 +69,8 @@ export interface TestServicesOptions {
   /** Pass a store on a shared memory backend to simulate a reload. */
   cartStore?: CartStore;
   /**
-   * Cart and share default to on here, so the tests of those features need no setup;
-   * the shipped default (both off) is covered by tests that pass `{ cart: false, share: false }`.
+   * Cart, share and the product page default to on here, so the tests of those features need
+   * no setup; the shipped default (all off) is covered by tests that turn them off.
    */
   features?: Partial<Features>;
 }
@@ -89,7 +89,7 @@ export function createTestServices(options: TestServicesOptions = {}): Services 
       mockControls: failurePolicy,
       cartStore: options.cartStore ?? createCartStore(memoryCartStorage()),
       productContent: templateProductContent,
-      features: { cart: true, share: true, ...options.features },
+      features: { cart: true, share: true, productPage: true, ...options.features },
     };
   }
   return {
@@ -100,6 +100,6 @@ export function createTestServices(options: TestServicesOptions = {}): Services 
     mockControls: null,
     cartStore: options.cartStore ?? createCartStore(memoryCartStorage()),
     productContent: templateProductContent,
-    features: { cart: true, share: true, ...options.features },
+    features: { cart: true, share: true, productPage: true, ...options.features },
   };
 }

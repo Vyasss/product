@@ -5,6 +5,7 @@ import { Wordmark } from '../../components/layout/Wordmark';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { Drawer } from '../../components/ui/Drawer';
+import { Pagination } from '../../components/ui/Pagination';
 import {
   DEFAULT_FILTERS,
   hasActiveFilters,
@@ -12,6 +13,7 @@ import {
   type FilterState,
   type SortKey,
 } from '../../domain/filters';
+import { clampPage, pageBounds, pageCountFor } from '../../domain/pagination';
 import { useAnnounce } from '../../hooks/useAnnounce';
 import { useCatalogData } from '../../hooks/useCatalogData';
 import { useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
@@ -23,11 +25,12 @@ import { useFilterState } from '../../url/useFilterState';
 import { EmptyState } from './EmptyState';
 import { ErrorState } from '../shared/ErrorState';
 import { FilterPanel } from './FilterPanel';
-import { pluralizeProducts, pluralizeResults, relaxationNote } from '../shared/format';
+import { formatCount, pluralizeProducts, pluralizeResults, relaxationNote } from '../shared/format';
 import { LoadingState } from './LoadingState';
 import { MockControls } from './MockControls';
 import { ProductGrid } from './ProductGrid';
 import { ResultSummary } from './ResultSummary';
+import { sampleBrands } from './sampleBrands';
 import { SearchBox } from './SearchBox';
 import { SmartSearchSuggestion } from './SmartSearchSuggestion';
 import { useSearchSuggestions } from './useSearchSuggestions';
@@ -40,7 +43,7 @@ export function CatalogPage() {
   const { cart } = features;
   const { products: productsState } = useCatalogData();
   const { retry } = productsState;
-  const { filters, update } = useFilterState();
+  const { filters, page, update, setPage } = useFilterState();
   const search = useSearchText(filters.q, update);
   const { reset: resetSearchText, onTextChange, flush: flushSearch } = search;
   const announce = useAnnounce();
@@ -52,6 +55,8 @@ export function CatalogPage() {
 
   const products = productsState.status === 'success' ? productsState.products : null;
   const engine = useMemo(() => (products ? createSearchEngine(products) : null), [products, createSearchEngine]);
+  // Every brand, most products first: offered when a search finds nothing (the brands are invented).
+  const brands = useMemo(() => sampleBrands(products ?? []), [products]);
 
   // Results follow the deferred text immediately; the URL `q` catches up after the debounce.
   const effectiveFilters = useMemo<FilterState>(
@@ -59,7 +64,21 @@ export function CatalogPage() {
     [filters, search.deferredQuery],
   );
   const result = useMemo(() => engine?.search(effectiveFilters) ?? null, [engine, effectiveFilters]);
-  const resetKey = useMemo(() => serializeFilters(effectiveFilters, EMPTY_PARAMS), [effectiveFilters]);
+
+  // One page of the results is rendered (and virtualised); the page number lives in the URL.
+  const pageCount = pageCountFor(result?.total ?? 0);
+  // While typed text has not reached the URL yet, the results are new: show their first page.
+  const requestedPage = search.deferredQuery === filters.q ? page : 1;
+  const currentPage = clampPage(requestedPage, result?.total ?? 0);
+  const pageRange = useMemo(() => pageBounds(currentPage, result?.total ?? 0), [currentPage, result]);
+  const pageIndices = useMemo(
+    () => result?.indices.slice(pageRange.start, pageRange.end) ?? [],
+    [result, pageRange],
+  );
+  const resetKey = useMemo(
+    () => serializeFilters(effectiveFilters, EMPTY_PARAMS, currentPage),
+    [effectiveFilters, currentPage],
+  );
 
   // One polite announcement per settled state.
   const total = result?.total ?? null;
@@ -100,6 +119,17 @@ export function CatalogPage() {
   );
 
   const changeSort = useCallback((sort: SortKey | null) => update({ sort }, { history: 'push' }), [update]);
+
+  // The grid scrolls back to the top of the list; focus goes to the results heading so the
+  // keyboard continues from the top of the new page, not from the buttons at the bottom.
+  const goToPage = useCallback(
+    (next: number) => {
+      setPage(next);
+      headingRef.current?.focus({ preventScroll: true });
+      announce(`Page ${next} of ${pageCount}`, 0);
+    },
+    [setPage, announce, pageCount],
+  );
 
   const applySmartSearch = useCallback(
     (patch: FilterPatch) => {
@@ -199,6 +229,7 @@ export function CatalogPage() {
             onOpenFilters={openFilters}
             headingRef={headingRef}
           />
+          {mockControls && <MockControls controls={mockControls} onReload={retry} />}
           {queryInterpreter && (
             <SmartSearchSuggestion
               text={search.deferredQuery}
@@ -212,15 +243,31 @@ export function CatalogPage() {
               <ErrorState error={productsState.error} retrying={productsState.retrying} onRetry={retry} />
             )}
             {products && result && result.total === 0 && (
-              <EmptyState query={search.deferredQuery} onClearAll={clearAll} />
+              <EmptyState
+                query={search.deferredQuery}
+                onClearAll={clearAll}
+                brands={brands}
+                onSearch={pickSuggestion}
+              />
             )}
             {products && result && result.total > 0 && (
               <ProductGrid
                 products={products}
-                indices={result.indices}
+                indices={pageIndices}
+                firstPosition={pageRange.start + 1}
+                setSize={result.total}
                 resetKey={resetKey}
                 restore={scrollMemory.restore}
                 onOpenProduct={scrollMemory.rememberProduct}
+              />
+            )}
+            {products && result && pageCount > 1 && (
+              <Pagination
+                page={currentPage}
+                pageCount={pageCount}
+                onChange={goToPage}
+                label="Result pages"
+                summary={`Showing ${formatCount(pageRange.start + 1)}–${formatCount(pageRange.end)} of ${formatCount(result.total)}`}
               />
             )}
           </section>
@@ -242,7 +289,6 @@ export function CatalogPage() {
         <FilterPanel filters={filters} facetCounts={facetCounts} onUpdate={update} />
       </Drawer>
 
-      {mockControls && <MockControls controls={mockControls} onReload={retry} />}
     </div>
   );
 }

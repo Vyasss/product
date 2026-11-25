@@ -31,14 +31,15 @@ const lazyPage = (page: ReactNode) => <Suspense fallback={<PageFallback />}>{pag
 
 /**
  * Route table, shared by the browser app and by tests (which wrap it in a MemoryRouter).
- * With the cart feature off, the cart and checkout paths are unknown paths like any other.
+ * Features that are off have no routes: their paths are unknown paths like any other. With
+ * every optional feature off (the default build) the app is the single catalog page.
  */
 export function AppRoutes() {
-  const { cart } = useFeatures();
+  const { cart, productPage } = useFeatures();
   return (
     <Routes>
       <Route path="/" element={<CatalogPage />} />
-      <Route path="/product/:id" element={lazyPage(<ProductPage />)} />
+      {productPage && <Route path="/product/:id" element={lazyPage(<ProductPage />)} />}
       {cart && <Route path="/cart" element={lazyPage(<CartPage />)} />}
       {cart && <Route path="/checkout" element={lazyPage(<CheckoutPage />)} />}
       {cart && <Route path="/checkout/confirmation" element={lazyPage(<ConfirmationPage />)} />}

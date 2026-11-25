@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_FEATURE_SMART_SEARCH?: string;
   readonly VITE_FEATURE_CART?: string;
   readonly VITE_FEATURE_SHARE?: string;
+  readonly VITE_FEATURE_PRODUCT_PAGE?: string;
   readonly VITE_SITE_URL?: string;
 }
 

@@ -10,60 +10,66 @@
   --color-*: initial;
   --color-white: #ffffff;
 
+  /*
+   * Colours follow Axis Max Life Insurance (MLI): burgundy #97144d and navy #003974 are the
+   * two fills of the official logo file; #505662 and #252931 are the site's body and badge
+   * text colours. Lighter tints are derived from them. Contrast ratios are in README.md.
+   */
+
   /* Text */
-  --color-ink: #1b1b22;
-  --color-ink-muted: #565863;
+  --color-ink: #252931;
+  --color-ink-muted: #505662;
 
-  /* Surfaces and lines: warm ivory rather than grey */
-  --color-surface: #f7f5f0;
-  --color-tint: #f0ebe6;
+  /* Surfaces and lines: cool light grey */
+  --color-surface: #f4f6f9;
+  --color-tint: #eaeff5;
   --color-card: #ffffff;
-  --color-line: #e3ded3;
-  --color-line-strong: #857f73;
+  --color-line: #dbe1e8;
+  --color-line-strong: #7b8594;
 
-  /* Brand (AllinONE): deep plum with a blush-rose accent */
-  --color-brand: #4b2a7b;
-  --color-brand-strong: #3a1f61;
-  --color-brand-soft: #efeaf7;
-  --color-brand-ink: #45267a;
-  --color-header: #1f1433;
-  --color-header-muted: #d3c8e6;
-  --color-accent: #f2c6cf;
-  --color-accent-strong: #e8adb9;
+  /* Brand: MLI burgundy for actions, MLI navy for the header and footer */
+  --color-brand: #97144d;
+  --color-brand-strong: #7a1040;
+  --color-brand-soft: #f7e9ef;
+  --color-brand-ink: #97144d;
+  --color-header: #003974;
+  --color-header-muted: #c9d6e8;
+  --color-accent: #8fd0f2;
+  --color-accent-strong: #6cbfeb;
 
   /* Status */
   --color-success: #17663a;
-  --color-danger: #a3261e;
+  --color-danger: #b3261e;
   --color-danger-soft: #fbeceb;
-  --color-warn-soft: #fbf1d8;
+  --color-warn-soft: #fdf3dc;
   --color-warn-ink: #6b4a00;
   --color-star: #a66f17;
-  --color-star-empty: #d8d3c8;
+  --color-star-empty: #d5dbe3;
 
   /* Interaction */
   --color-focus: #1f5fd1;
-  --color-overlay: rgb(31 20 51 / 0.55);
-  --color-skeleton: #e9e5dc;
-  --color-skeleton-shine: #f6f3ed;
+  --color-overlay: rgb(0 30 60 / 0.55);
+  --color-skeleton: #e4e9f0;
+  --color-skeleton-shine: #f3f6fa;
 
   /* Shape and depth */
   --radius-control: 0.625rem;
   --radius-card: 1rem;
-  --shadow-card: 0 1px 2px rgb(31 20 51 / 0.04), 0 4px 10px -6px rgb(31 20 51 / 0.12);
+  --shadow-card: 0 1px 2px rgb(0 30 60 / 0.04), 0 4px 10px -6px rgb(0 30 60 / 0.12);
   /* Card hover: kept short so it fits inside the virtual row, which clips painting 6px out. */
-  --shadow-hover: 0 1px 2px rgb(31 20 51 / 0.06), 0 6px 10px -6px rgb(31 20 51 / 0.42);
-  --shadow-raised: 0 14px 30px -12px rgb(31 20 51 / 0.28), 0 2px 6px rgb(31 20 51 / 0.08);
+  --shadow-hover: 0 1px 2px rgb(0 30 60 / 0.06), 0 6px 10px -6px rgb(0 30 60 / 0.42);
+  --shadow-raised: 0 14px 30px -12px rgb(0 30 60 / 0.28), 0 2px 6px rgb(0 30 60 / 0.08);
   --shadow-header: 0 2px 8px rgb(0 0 0 / 0.18);
 
   /*
-   * Type: Inter for the interface, Playfair Display for the wordmark and page headings.
-   * Both are bundled with the app (imported in main.tsx): no request leaves the site, and
-   * the system stack shows until they load.
+   * Type: one sans-serif family throughout, as on the MLI site. Inter is bundled with the app
+   * (imported in main.tsx), so no request leaves the site; Noto Sans, the MLI site's face, is
+   * next in the stack where it is installed.
    */
   --font-sans:
-    'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial,
+    'Inter Variable', 'Noto Sans', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
     sans-serif;
-  --font-display: 'Playfair Display Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-display: var(--font-sans);
 
   --animate-shimmer: shimmer 1.4s ease-in-out infinite;
 

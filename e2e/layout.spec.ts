@@ -64,26 +64,29 @@ for (const viewport of [
   { width: 1440, height: 1000, step: 2500 },
   { width: 390, height: 844, step: 9000 },
 ]) {
-  test(`fewer than 80 product cards in the DOM while scrolling the whole list (${viewport.width}px)`, async ({ page }) => {
+  test(`fewer than 80 product cards in the DOM while scrolling a whole page, first and last (${viewport.width}px)`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
-    await page.goto('/');
-    await waitForCards(page);
-    const height = await page.evaluate(() => document.documentElement.scrollHeight);
-    let maxCards = 0;
-    let lastPosition = 0;
-    for (let y = 0; y <= height + viewport.step; y += viewport.step) {
-      await page.evaluate((top) => window.scrollTo(0, top), y);
-      await nextFrames(page);
-      const { cards, last } = await page.evaluate(() => {
-        const items = document.querySelectorAll('[role="listitem"]');
-        const positions = Array.from(items, (item) => Number(item.getAttribute('aria-posinset')));
-        return { cards: items.length, last: Math.max(0, ...positions) };
-      });
-      maxCards = Math.max(maxCards, cards);
-      lastPosition = Math.max(lastPosition, last);
+    // Page 1 holds products 1 to 60; the last of the 84 pages ends with product 5,000.
+    for (const [path, expectedLast] of [['/', 60], ['/?page=84', 5000]] as const) {
+      await page.goto(path);
+      await waitForCards(page);
+      const height = await page.evaluate(() => document.documentElement.scrollHeight);
+      let maxCards = 0;
+      let lastPosition = 0;
+      for (let y = 0; y <= height + viewport.step; y += viewport.step) {
+        await page.evaluate((top) => window.scrollTo(0, top), y);
+        await nextFrames(page);
+        const { cards, last } = await page.evaluate(() => {
+          const items = document.querySelectorAll('[role="listitem"]');
+          const positions = Array.from(items, (item) => Number(item.getAttribute('aria-posinset')));
+          return { cards: items.length, last: Math.max(0, ...positions) };
+        });
+        maxCards = Math.max(maxCards, cards);
+        lastPosition = Math.max(lastPosition, last);
+      }
+      console.log(`${viewport.width}px ${path}: at most ${maxCards} cards in the DOM`);
+      expect(maxCards).toBeLessThan(80);
+      expect(lastPosition).toBe(expectedLast);
     }
-    console.log(`${viewport.width}px: at most ${maxCards} cards in the DOM`);
-    expect(maxCards).toBeLessThan(80);
-    expect(lastPosition).toBe(5000);
   });
 }

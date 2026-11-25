@@ -7,7 +7,7 @@ export interface AppConfig {
   apiBaseUrl: string | null;
   /** Mock only: probability in [0, 1] that a request fails with a simulated 500. */
   mockFailRate: number;
-  /** Show the on-page mock controls panel. */
+  /** Show the on-page control that simulates a failed API response (mock service only). */
   enableMockControls: boolean;
   /** Show smart-search suggestions. */
   smartSearch: boolean;
@@ -15,6 +15,8 @@ export interface AppConfig {
   cart: boolean;
   /** Share buttons (copy link, WhatsApp, email, Teams). The URL alone still restores a view. */
   share: boolean;
+  /** Product detail page at /product/:id; off, the app is the single catalog page. */
+  productPage: boolean;
 }
 
 export type RawEnv = Readonly<Record<string, string | boolean | undefined>>;
@@ -58,6 +60,7 @@ export function parseConfig(env: RawEnv): AppConfig {
     smartSearch: readFlag(env, 'VITE_FEATURE_SMART_SEARCH'),
     cart: readFlag(env, 'VITE_FEATURE_CART'),
     share: readFlag(env, 'VITE_FEATURE_SHARE'),
+    productPage: readFlag(env, 'VITE_FEATURE_PRODUCT_PAGE'),
   };
 }
 
@@ -68,4 +71,5 @@ export const appConfig: AppConfig = parseConfig({
   VITE_FEATURE_SMART_SEARCH: import.meta.env.VITE_FEATURE_SMART_SEARCH,
   VITE_FEATURE_CART: import.meta.env.VITE_FEATURE_CART,
   VITE_FEATURE_SHARE: import.meta.env.VITE_FEATURE_SHARE,
+  VITE_FEATURE_PRODUCT_PAGE: import.meta.env.VITE_FEATURE_PRODUCT_PAGE,
 });

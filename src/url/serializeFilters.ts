@@ -7,10 +7,10 @@ const encode = (value: string): string => encodeURIComponent(value);
 
 /**
  * Canonical query string (without the leading "?"): owned params in a fixed order with
- * defaults omitted, then every foreign param (`mockFail`, `utm_*`, ...) in its original order.
- * Commas between categories stay literal, matching `?category=Apparel,Sports`.
+ * defaults omitted (page 1 included), then every foreign param (`mockFail`, `utm_*`, ...) in
+ * its original order. Commas between categories stay literal, matching `?category=Apparel,Sports`.
  */
-export function serializeFilters(filters: FilterState, current: URLSearchParams): string {
+export function serializeFilters(filters: FilterState, current: URLSearchParams, page = 1): string {
   const parts: string[] = [];
 
   if (filters.q !== '') parts.push(`q=${encode(filters.q)}`);
@@ -21,6 +21,7 @@ export function serializeFilters(filters: FilterState, current: URLSearchParams)
   if (filters.maxPrice !== null) parts.push(`maxPrice=${filters.maxPrice}`);
   if (filters.inStock) parts.push('inStock=true');
   if (filters.sort !== null) parts.push(`sort=${filters.sort}`);
+  if (page > 1) parts.push(`page=${page}`);
 
   current.forEach((value, key) => {
     if (!OWNED.has(key)) parts.push(`${encode(key)}=${encode(value)}`);
@@ -30,7 +31,7 @@ export function serializeFilters(filters: FilterState, current: URLSearchParams)
 }
 
 /** Same as serializeFilters, with the leading "?" when non-empty (for `location.search`). */
-export function toSearchString(filters: FilterState, current: URLSearchParams): string {
-  const query = serializeFilters(filters, current);
+export function toSearchString(filters: FilterState, current: URLSearchParams, page = 1): string {
+  const query = serializeFilters(filters, current, page);
   return query === '' ? '' : `?${query}`;
 }

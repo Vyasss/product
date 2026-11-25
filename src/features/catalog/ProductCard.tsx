@@ -1,4 +1,4 @@
-import { memo, useId, useMemo, useState } from 'react';
+import { memo, useId, useState } from 'react';
 import { Link } from 'react-router';
 import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
@@ -91,8 +91,7 @@ export const ProductCard = memo(function ProductCard({
 }: ProductCardProps) {
   const titleId = useId();
   const stockId = useId();
-  const { productContent, features } = useServices();
-  const content = useMemo(() => productContent.contentFor(product), [productContent, product]);
+  const { features } = useServices();
 
   const listItem = {
     role: 'listitem',
@@ -103,12 +102,17 @@ export const ProductCard = memo(function ProductCard({
   // Hover (pointer devices only; Tailwind's hover: is gated on `(hover: hover)`, so touch
   // screens never get a stuck state): a 2px lift, a tinted border and a tighter shadow. All of
   // it stays within the row's 6px paint bleed, and the lift is skipped for reduced motion.
-  const cardClass =
-    'group relative transition-[box-shadow,border-color,transform] duration-200 ease-out ' +
-    'hover:border-brand/45 hover:shadow-hover motion-safe:hover:-translate-y-0.5';
+  // Without the product page a card opens nothing, so it has no hover cues and no link.
+  const cardClass = features.productPage
+    ? 'group relative transition-[box-shadow,border-color,transform] duration-200 ease-out ' +
+      'hover:border-brand/45 hover:shadow-hover motion-safe:hover:-translate-y-0.5'
+    : 'relative';
 
   const title = (
-    <h3 id={titleId} className="line-clamp-2 h-10 text-sm leading-5 font-medium text-ink">
+    <h3 id={titleId} title={product.title} className="line-clamp-2 h-10 text-sm leading-5 font-medium text-ink">
+      {!features.productPage ? (
+        product.title
+      ) : (
       <Link
         to={`/product/${product.id}`}
         state={{ from }}
@@ -119,15 +123,13 @@ export const ProductCard = memo(function ProductCard({
       >
         {product.title}
       </Link>
+      )}
     </h3>
   );
   const brand = (
     <p className="truncate text-xs font-semibold tracking-wider text-ink-muted uppercase">{product.brand}</p>
   );
-  const description = (
-    <p className="line-clamp-2 h-8 text-xs leading-4 text-ink-muted">{content.description}</p>
-  );
-  const rating = <StarRating value={product.rating} reviewCount={content.reviewCount} />;
+  const rating = <StarRating value={product.rating} />;
 
   if (layout === 'list') {
     return (
@@ -141,7 +143,6 @@ export const ProductCard = memo(function ProductCard({
             </Badge>
           </div>
           {title}
-          {description}
           {rating}
           <div className="flex items-center justify-between gap-2">
             <Price value={product.price} />
@@ -164,7 +165,6 @@ export const ProductCard = memo(function ProductCard({
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 p-3">
         {brand}
         {title}
-        {description}
         {rating}
         <Price value={product.price} />
         <StockLine product={product} id={stockId} />

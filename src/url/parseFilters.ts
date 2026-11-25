@@ -1,8 +1,9 @@
 import { MAX_QUERY_LENGTH, isSortKey, type FilterState } from '../domain/filters';
+import { MAX_PAGE } from '../domain/pagination';
 import { CATEGORIES, type Category } from '../domain/product';
 
 /** The query-string keys this app owns, in canonical order. Everything else is preserved. */
-export const FILTER_PARAM_KEYS = ['q', 'category', 'minPrice', 'maxPrice', 'inStock', 'sort'] as const;
+export const FILTER_PARAM_KEYS = ['q', 'category', 'minPrice', 'maxPrice', 'inStock', 'sort', 'page'] as const;
 
 const CATEGORY_BY_LOWERCASE: ReadonlyMap<string, Category> = new Map(
   CATEGORIES.map((category) => [category.toLowerCase(), category]),
@@ -43,4 +44,15 @@ export function parseFilters(params: URLSearchParams): FilterState {
     inStock: params.get('inStock') === 'true',
     sort: sort !== null && isSortKey(sort) ? sort : null,
   };
+}
+
+/**
+ * Result page, 1-based. Kept apart from FilterState: it is a position in the results, not a
+ * filter. Total like parseFilters: anything but a whole number from 1 to MAX_PAGE is page 1.
+ */
+export function parsePage(params: URLSearchParams): number {
+  const raw = params.get('page');
+  if (raw === null || !/^\d{1,5}$/.test(raw)) return 1;
+  const page = Number(raw);
+  return page >= 1 && page <= MAX_PAGE ? page : 1;
 }
