@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { expectResults, expectSearch, tabTo, waitForCards } from './helpers';
+import { expectResults, expectSearch, resultsHeading, tabTo, waitForCards } from './helpers';
 
 // Expected counts come from the deterministic dataset (seed 20240611, see the checksum test).
 test('full journey with the keyboard only: search, category, price, sort, clear all', async ({ page }) => {
@@ -57,13 +57,16 @@ test('full journey with the keyboard only: search, category, price, sort, clear 
   expect(prices.length).toBeGreaterThan(3);
   expect(prices).toEqual([...prices].sort((a, b) => a - b));
 
-  // Clear all with Enter: URL reset, full count, focus back in the search box
-  await tabTo(page, page.getByRole('button', { name: 'Clear all filters' }));
+  // Clear all with Enter: URL reset, full count, focus on the results heading, the button gone
+  const clearAll = page.getByRole('button', { name: 'Clear all filters' });
+  await tabTo(page, clearAll);
   await page.keyboard.press('Enter');
   await expectResults(page, '5,000 results');
   await expectSearch(page, '');
   await expect(search).toHaveValue('');
-  await expect(search).toBeFocused();
+  await expect(resultsHeading(page)).toBeFocused();
+  await expect(clearAll).toHaveCount(0);
+  await expect(page.getByRole('listbox', { name: 'Search suggestions' })).toBeHidden();
 });
 
 test('conversational search and typo correction in real Chrome', async ({ page }) => {

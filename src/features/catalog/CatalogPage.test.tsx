@@ -83,7 +83,7 @@ describe('CatalogPage (core, add-on flags off)', () => {
     await waitFor(() => expect(heading).toHaveFocus());
   });
 
-  it('shows the empty state; Clear all resets the URL and focuses the search box', async () => {
+  it('shows the empty state; Clear all resets the URL and focuses the results heading', async () => {
     const { user, currentSearch } = renderApp({ route: '/?q=zzzz&inStock=true&utm_source=mail' });
     const empty = await screen.findByRole('heading', { name: 'No products match “zzzz”' });
 
@@ -95,7 +95,8 @@ describe('CatalogPage (core, add-on flags off)', () => {
     expect(currentSearch()).toBe('?utm_source=mail');
     const search = screen.getByRole('combobox', { name: 'Search products' });
     expect(search).toHaveValue('');
-    expect(search).toHaveFocus();
+    expect(screen.getByRole('heading', { level: 2 })).toHaveFocus();
+    expect(screen.queryByRole('button', { name: 'Clear all filters' })).not.toBeInTheDocument();
   });
 
   it('removes a single filter with its chip', async () => {

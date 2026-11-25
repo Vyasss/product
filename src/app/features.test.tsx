@@ -18,9 +18,9 @@ describe('the default build: a single catalog page', () => {
     expect(screen.getByRole('button', { name: 'Buy now: Trail Running Shoes' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Share/ })).not.toBeInTheDocument();
     expect(screen.queryByText(/reviews?\)/)).not.toBeInTheDocument();
-    // The brief's controls are all there.
     expect(screen.getByRole('combobox', { name: 'Search products' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Clear all filters' })).toBeInTheDocument();
+    // Nothing to clear yet, so no Clear all button.
+    expect(screen.queryByRole('button', { name: 'Clear all filters' })).not.toBeInTheDocument();
   });
 
   it.each(['/product/p-1', '/cart', '/cart?items=p-1:2', '/checkout', '/checkout/confirmation'])(
@@ -60,5 +60,21 @@ describe('the default build: a single catalog page', () => {
     await waitFor(() => expect(currentSearch()).toBe(''));
     expect(screen.getByRole('combobox', { name: 'Search products' })).toHaveValue('');
     expect(await screen.findByRole('heading', { level: 3, name: 'Cotton T-Shirt' })).toBeInTheDocument();
+  });
+
+  it('focus that the app moves to the search box does not open the suggestions; a click does', async () => {
+    const services = defaultBuild();
+    services.recentSearches.add('yoga mat');
+    const { user } = renderApp({ route: '/?q=shoes', services });
+    await screen.findByRole('heading', { level: 3, name: 'Trail Running Shoes' });
+    const search = screen.getByRole('combobox', { name: 'Search products' });
+
+    await user.click(screen.getByRole('button', { name: 'Clear search' }));
+    expect(search).toHaveFocus();
+    expect(screen.queryByRole('listbox', { name: 'Search suggestions' })).not.toBeInTheDocument();
+
+    await user.click(search);
+    expect(screen.getByRole('listbox', { name: 'Search suggestions' })).toBeVisible();
+    expect(screen.getByRole('option', { name: /yoga mat/ })).toBeInTheDocument();
   });
 });

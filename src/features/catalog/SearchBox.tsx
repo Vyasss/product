@@ -44,12 +44,15 @@ export const SearchBox = memo(function SearchBox({
   const id = useId();
   const listId = `${id}-suggestions`;
   const [focused, setFocused] = useState(false);
+  // Opened by the user (a click or tap in the field, typing, or Down), never by focus alone:
+  // focus that the app moves here (e.g. after Clear search) must not pop the list open.
+  const [engaged, setEngaged] = useState(false);
   const [highlighted, setHighlighted] = useState(-1);
   // The text for which the list was closed (Esc, or a pick); typing anything else reopens it.
   const [dismissedFor, setDismissedFor] = useState<string | null>(null);
 
   const count = suggestions.length;
-  const open = focused && count > 0 && dismissedFor !== value;
+  const open = focused && engaged && count > 0 && dismissedFor !== value;
   const active = open && highlighted < count ? highlighted : -1;
 
   const pick = (text: string) => {
@@ -62,6 +65,7 @@ export const SearchBox = memo(function SearchBox({
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       if (count === 0) return;
       event.preventDefault();
+      setEngaged(true);
       setDismissedFor(null);
       const step = event.key === 'ArrowDown' ? 1 : -1;
       // Nothing highlighted yet: Down starts at the first item, Up at the last. Otherwise wrap.
@@ -108,12 +112,15 @@ export const SearchBox = memo(function SearchBox({
           value={value}
           onChange={(event) => {
             setHighlighted(-1);
+            setEngaged(true);
             onChange(event.target.value);
           }}
+          onPointerDown={() => setEngaged(true)}
           onKeyDown={onKeyDown}
           onFocus={() => setFocused(true)}
           onBlur={() => {
             setFocused(false);
+            setEngaged(false);
             setHighlighted(-1);
           }}
           maxLength={MAX_QUERY_LENGTH}

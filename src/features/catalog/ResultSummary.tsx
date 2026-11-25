@@ -94,13 +94,15 @@ export const ResultSummary = memo(function ResultSummary({
       </div>
       {note && <p className="-mt-1 text-sm text-ink-muted">{note}</p>}
       {/* Mobile: chips stay on one scrollable line. Padding leaves room for focus rings. */}
-      {/* "Clear all filters" is always on the page; it is disabled while there is nothing to clear. */}
-      <div className="-mx-1.5 -my-1 flex items-center gap-2 overflow-x-auto px-1.5 py-1.5 md:flex-wrap md:overflow-visible">
-        {canClear && <ActiveFilterChips filters={filters} onRemove={onRemove} />}
-        <Button variant="ghost" className="shrink-0 px-2" disabled={!canClear} onClick={onClearAll}>
-          Clear all filters
-        </Button>
-      </div>
+      {/* Chips and "Clear all filters" appear once a search or filter is applied. */}
+      {canClear && (
+        <div className="-mx-1.5 -my-1 flex items-center gap-2 overflow-x-auto px-1.5 py-1.5 md:flex-wrap md:overflow-visible">
+          <ActiveFilterChips filters={filters} onRemove={onRemove} />
+          <Button variant="ghost" className="shrink-0 px-2" onClick={onClearAll}>
+            Clear all filters
+          </Button>
+        </div>
+      )}
     </div>
   );
 });

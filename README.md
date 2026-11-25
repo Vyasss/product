@@ -83,7 +83,7 @@ the brief's eight fields, and the mock API returns exactly that shape.
 | In-stock filter | Checkbox "In stock only" | `StockToggle.tsx` | engine tests, e2e history |
 | Sort: price low-high, high-low, rating highest first | Native select; ties broken by dataset order (stable) | `SortSelect.tsx`, `InMemorySearchEngine.ts` | engine sort tests, e2e journey (prices ascending) |
 | Total match count | Heading "N results for “q”" in the results bar; the live region says "N products found" | `ResultSummary.tsx` | interaction and e2e tests |
-| "Clear all filters" | Resets query, filters and sort, keeps foreign URL params, focuses the search box | `CatalogPage.tsx`, `ResultSummary.tsx`, `EmptyState.tsx` | interaction tests, e2e journey |
+| "Clear all filters" | Shown in the results bar once a search or filter is applied (and in the empty state). Resets query, filters and sort, keeps foreign URL params, then focuses the results heading | `CatalogPage.tsx`, `ResultSummary.tsx`, `EmptyState.tsx` | interaction tests, e2e journey |
 | Filters, query and sort in the URL; reload or shared link restores the view | URL is the only filter store; total parser, canonical serializer | `src/url/*` | `filters-url.test.ts`, e2e `history.spec.ts` (reload, Back/Forward, no history flooding) |
 | Loading skeletons | Shimmer skeletons with the exact grid/list card dimensions, `aria-busy` | `LoadingState.tsx` | dimensions shared with the card constants; reviewed visually in an earlier round, not re-captured this round |
 | Helpful empty state | Only after a successful load with zero matches; illustration, tips, Clear all | `EmptyState.tsx` | interaction tests, e2e |
@@ -94,7 +94,7 @@ the brief's eight fields, and the mock API returns exactly that shape.
 | No lag typing or rendering large lists; justified strategy; no redundant re-renders | Row virtualisation, deferred search, memoised cards, cheap per-card cart subscription | `ProductGrid.tsx`, `ProductCard.tsx` | `npm run bench`, `npm run perf`, e2e DOM-count test |
 | Client-side routing on S3 + CloudFront with fallback to `/index.html` | CloudFront Function rewrites extension-less paths (`/product/p-00042`, `/cart`, `/checkout`) | `infra/cloudfront/spa-rewrite.js`, `src/app/router.tsx` | e2e `cloudfront.spec.ts` (runs the function in a VM), e2e deep-link reloads |
 | No hardcoded secrets; `VITE_*` config | One module reads `import.meta.env` and validates it | `src/config/env.ts`, `.env.example` | `env.test.ts` |
-| Vitest + RTL tests: core filter/sort logic and a user flow | 522 tests in 30 files | `src/**/*.test.ts(x)` | `npm test` |
+| Vitest + RTL tests: core filter/sort logic and a user flow | 527 tests in 31 files | `src/**/*.test.ts(x)` | `npm test` |
 | README with setup, architecture, performance, CloudFront notes, improvements | This file | `README.md` | n/a |
 
 ### Add-ons beyond the brief
@@ -273,7 +273,7 @@ in the font stack where it is installed. Nothing is fetched from a CDN.
 | Area | What it looks like |
 |---|---|
 | Header | Sticky navy bar: wordmark (bag mark only on phones; on the catalog it is a link that clears search, filters and page and returns to the top), visible "Search products" label, search field with icon and Clear button (cart link with count badge when the cart is on). One compact row on phones (72 px). |
-| Results bar | "N results for “q”", Filters button (below 1024 px), Sort select, relaxation note, chips and Clear all. Sticky under the header from 768 px up; on phones it scrolls away so the pinned area stays at 72 px. |
+| Results bar | "N results for “q”", Filters button (below 1024 px), Sort select, relaxation note, and (once anything is applied) chips and Clear all. Sticky under the header from 768 px up; on phones it scrolls away so the pinned area stays at 72 px. |
 | Filter sidebar | Card with Category, Price and Availability sections and right-aligned facet counts; stays in view. Below 1024 px the same panel opens in a drawer with a sticky "Show N results" button. |
 | Product card | The eight `Product` fields: illustration (`thumbnailUrl`) with category badge, brand, two-line title, star rating with its value, price with a raised ₹, stock line ("1 in cart" after adding). Then Add to cart (burgundy outline) and Buy now (solid burgundy). Without the cart page, Buy now adds the product and announces that checkout is not part of the demo. With the product page on, the title is a link (with hover cues on pointer devices). Fixed height: 24.125 rem in the grid and 13.25 rem in the phone list layout (21 and 9.375 rem with `VITE_FEATURE_BUY_BUTTONS=false`), so the last line sits on the bottom padding (checked in Chrome at 1440, 768, 390 and 320 px). All text clamps. |
 | Pages | One catalog page by default. With the optional features on, the product page, cart, checkout, confirmation and 404 share one layout with a header search that opens the catalog. |
@@ -535,7 +535,8 @@ previously loaded catalog.
   the sort select opens with either; price fields commit on Enter. A native checkbox toggles
   only on Space, so the filter checkboxes also toggle on Enter (`Checkbox.tsx`).
 - One polite live region for results, loading, errors, cart changes and search corrections.
-- Focus: Clear all → search box; chip removal → results heading; Retry focused on error and
+- Focus: Clear all and chip removal → results heading; the suggestion list opens only on the
+  user's own click, typing or Down in the search field, never because focus moved there; Retry focused on error and
   results heading after recovery; drawer traps focus, Esc closes, focus returns; after
   navigation focus moves to the page heading; Back to the catalog refocuses the opened
   product link; checkout submit focuses the first invalid field.
@@ -613,7 +614,7 @@ script file itself has not been run.
 
 ## Tests
 
-`npm test`: **522 tests in 30 files** (Vitest, jsdom, React Testing Library, user-event):
+`npm test`: **527 tests in 31 files** (Vitest, jsdom, React Testing Library, user-event):
 generator (determinism, checksum, price spread, illustrations for every item type), mock
 service, engine filters and sorts, conversational search (stop words, fallback, typo table
 including brand typos, short-token and correct-query cases), URL codec, smart-search phrases,
@@ -672,7 +673,7 @@ page; axe).
 
 Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 
-- `npm run typecheck`, `npm run lint` exit 0; `npm test` 522 passed in 30 files;
+- `npm run typecheck`, `npm run lint` exit 0; `npm test` 527 passed in 31 files;
   `npm run e2e` 87 passed in real Chrome, including axe on every main page.
 - The S3 + CloudFront deployment: see the checks listed under "Deploying to S3 + CloudFront".
 - Build (default flags): main JS 329.33 kB (106.28 kB gzip), CSS 38.01 kB (8.48 kB gzip).

@@ -108,7 +108,8 @@ export function CatalogPage() {
     resetSearchText('');
     update(DEFAULT_FILTERS, { history: 'push' });
     setFiltersOpen(false);
-    searchInputRef.current?.focus();
+    // The button disappears with the filters; continue from the results heading.
+    headingRef.current?.focus();
   }, [resetSearchText, update]);
 
   const removeFilter = useCallback(

@@ -72,6 +72,9 @@ test('a clicked suggestion is searched and remembered as a recent search across 
   await waitForCards(page);
   await page.getByRole('button', { name: 'Clear search' }).click();
   await expect(search).toBeFocused();
+  // Focus alone does not open the list; a click in the field does.
+  await expect(list).toBeHidden();
+  await search.click();
   const recent = list.getByRole('option').first();
   await expect(recent).toContainText(picked);
   await expect(recent).toContainText('Recent');
