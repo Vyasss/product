@@ -21,7 +21,7 @@ export function CardActions({ product, reasonId, className = '' }: CardActionsPr
   return (
     <div className={`relative z-10 grid grid-cols-2 gap-2 whitespace-nowrap ${className}`}>
       <Button
-        variant="primary"
+        variant="outline"
         className="px-1"
         disabled={!product.inStock || atLimit}
         aria-label={`Add to cart: ${product.title}`}
@@ -31,7 +31,7 @@ export function CardActions({ product, reasonId, className = '' }: CardActionsPr
         Add to cart
       </Button>
       <Button
-        variant="accent"
+        variant="primary"
         className="px-1"
         disabled={!product.inStock}
         aria-label={`Buy now: ${product.title}`}

@@ -89,7 +89,7 @@ export function createTestServices(options: TestServicesOptions = {}): Services 
       mockControls: failurePolicy,
       cartStore: options.cartStore ?? createCartStore(memoryCartStorage()),
       productContent: templateProductContent,
-      features: { cart: true, share: true, productPage: true, ...options.features },
+      features: { cart: true, share: true, productPage: true, buyButtons: true, ...options.features },
     };
   }
   return {
@@ -100,6 +100,6 @@ export function createTestServices(options: TestServicesOptions = {}): Services 
     mockControls: null,
     cartStore: options.cartStore ?? createCartStore(memoryCartStorage()),
     productContent: templateProductContent,
-    features: { cart: true, share: true, productPage: true, ...options.features },
+    features: { cart: true, share: true, productPage: true, buyButtons: true, ...options.features },
   };
 }

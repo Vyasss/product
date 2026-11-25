@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly VITE_FEATURE_CART?: string;
   readonly VITE_FEATURE_SHARE?: string;
   readonly VITE_FEATURE_PRODUCT_PAGE?: string;
+  readonly VITE_FEATURE_BUY_BUTTONS?: string;
   readonly VITE_SITE_URL?: string;
 }
 

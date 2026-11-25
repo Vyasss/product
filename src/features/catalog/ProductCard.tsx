@@ -52,9 +52,9 @@ function Thumbnail({ product, className }: { product: Product; className: string
 
 /** `compact` (phone list card) uses the short label so it fits beside the price. */
 function StockLine({ product, id, compact = false }: { product: Product; id: string; compact?: boolean }) {
-  const { cart } = useFeatures();
+  const { buyButtons } = useFeatures();
   const quantity = useCartQuantity(product.id);
-  const inCart = cart ? quantity : 0;
+  const inCart = buyButtons ? quantity : 0;
   if (!product.inStock) {
     return (
       <p id={id} className="truncate text-sm font-semibold text-danger">
@@ -150,7 +150,7 @@ export const ProductCard = memo(function ProductCard({
               <StockLine product={product} id={stockId} compact />
             </div>
           </div>
-          {features.cart && <CardActions product={product} reasonId={stockId} className="mt-auto" />}
+          {features.buyButtons && <CardActions product={product} reasonId={stockId} className="mt-auto" />}
         </div>
       </Card>
     );
@@ -168,7 +168,7 @@ export const ProductCard = memo(function ProductCard({
         {rating}
         <Price value={product.price} />
         <StockLine product={product} id={stockId} />
-        {features.cart && <CardActions product={product} reasonId={stockId} className="mt-auto" />}
+        {features.buyButtons && <CardActions product={product} reasonId={stockId} className="mt-auto" />}
       </div>
     </Card>
   );

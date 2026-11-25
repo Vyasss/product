@@ -4,17 +4,19 @@ import { createCartStore, memoryCartStorage } from '../cart/cartStore';
 import { createTestServices } from '../test/fixtures';
 import { renderApp } from '../test/renderWithProviders';
 
-/** The shipped default: VITE_FEATURE_CART, VITE_FEATURE_SHARE and VITE_FEATURE_PRODUCT_PAGE unset. */
+/** The shipped default: product page, cart page and share off; buy buttons on. */
 const defaultBuild = (cartStore = createCartStore(memoryCartStorage())) =>
-  createTestServices({ cartStore, features: { cart: false, share: false, productPage: false } });
+  createTestServices({ cartStore, features: { cart: false, share: false, productPage: false, buyButtons: true } });
 
 describe('the default build: a single catalog page', () => {
-  it('cards show the product fields only: no links, cart buttons, share button or description', async () => {
+  it('cards show the product fields and the buy buttons: no links, cart link, share button or description', async () => {
     renderApp({ services: defaultBuild() });
     expect(await screen.findByRole('heading', { level: 3, name: 'Trail Running Shoes' })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Trail Running Shoes' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /^Cart/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^(Add to cart|Buy now|Share)/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Add to cart: Trail Running Shoes' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Buy now: Trail Running Shoes' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Share/ })).not.toBeInTheDocument();
     expect(screen.queryByText(/reviews?\)/)).not.toBeInTheDocument();
     // The brief's controls are all there.
     expect(screen.getByRole('combobox', { name: 'Search products' })).toBeInTheDocument();
@@ -29,11 +31,18 @@ describe('the default build: a single catalog page', () => {
     },
   );
 
-  it('a cart saved by an earlier build is not shown on the cards', async () => {
-    const cartStore = createCartStore(memoryCartStorage(JSON.stringify([{ id: 'p-1', quantity: 2 }])));
-    renderApp({ services: defaultBuild(cartStore) });
-    expect(await screen.findByRole('heading', { level: 3, name: 'Trail Running Shoes' })).toBeInTheDocument();
-    expect(screen.queryByText(/in cart/)).not.toBeInTheDocument();
+  it('Add to cart and Buy now add and say so, without leaving the page (there is no checkout)', async () => {
+    const { user, currentSearch } = renderApp({ services: defaultBuild() });
+    await user.click(await screen.findByRole('button', { name: 'Add to cart: Trail Running Shoes' }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Added Trail Running Shoes to cart'));
+    expect(screen.getByText(/1 in cart/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Buy now: Leather Formal Shoes' }));
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent('Added Leather Formal Shoes to cart. Checkout is not part of this demo.'),
+    );
+    expect(screen.getByRole('heading', { level: 3, name: 'Leather Formal Shoes' })).toBeInTheDocument();
+    expect(currentSearch()).toBe('');
   });
 
   it('a search that finds nothing offers the catalog brands, and one click searches a brand', async () => {

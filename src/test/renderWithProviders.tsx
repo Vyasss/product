@@ -17,6 +17,7 @@ export const TEST_CONFIG: AppConfig = {
   cart: false,
   share: false,
   productPage: false,
+  buyButtons: false,
 };
 
 function LocationSpy({ onChange }: { onChange: (search: string) => void }) {

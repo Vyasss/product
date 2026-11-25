@@ -8,8 +8,8 @@ export interface MockControlsProps {
 
 /**
  * An on-page switch for the simulated failure: the next load of the mock service fails with a
- * 500, the error state appears, and its Retry recovers. Off by default
- * (VITE_ENABLE_MOCK_CONTROLS); `?mockFail=1` in the URL does the same without any UI.
+ * 500, the error state appears, and its Retry recovers. On by default with the mock service
+ * (VITE_ENABLE_MOCK_CONTROLS=false hides it); `?mockFail=1` in the URL does the same.
  */
 export function MockControls({ controls, onReload }: MockControlsProps) {
   return (
@@ -24,7 +24,7 @@ export function MockControls({ controls, onReload }: MockControlsProps) {
           onReload();
         }}
       >
-        Simulate API failure (500)
+        Simulate API failure
       </Button>
     </aside>
   );

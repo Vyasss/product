@@ -45,7 +45,7 @@ function BackAction() {
 
 function RelatedStrip({ title, products }: { title: string; products: readonly Product[] }) {
   const headingId = useId();
-  const { cart } = useFeatures();
+  const { buyButtons } = useFeatures();
   if (products.length === 0) return null;
   return (
     <section aria-labelledby={headingId} className="mt-12">
@@ -54,7 +54,7 @@ function RelatedStrip({ title, products }: { title: string; products: readonly P
       </h2>
       <div role="list" className="grid grid-cols-[repeat(auto-fill,minmax(13.75rem,1fr))] gap-4">
         {products.map((product, index) => (
-          <div key={product.id} role="presentation" style={{ height: `${cardHeightRem('grid', cart)}rem` }}>
+          <div key={product.id} role="presentation" style={{ height: `${cardHeightRem('grid', buyButtons)}rem` }}>
             <ProductCard product={product} position={index + 1} setSize={products.length} layout="grid" from="product" />
           </div>
         ))}
@@ -124,7 +124,7 @@ function ProductDetail({ product, headingRef }: { product: Product; headingRef: 
               </li>
             ))}
           </ul>
-          {features.cart && <PurchasePanel product={product} />}
+          {features.buyButtons && <PurchasePanel product={product} />}
           <p className="mt-3 text-xs text-ink-muted">
             Description, highlights and review count are generated demo content.
           </p>

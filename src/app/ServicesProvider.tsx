@@ -23,7 +23,12 @@ export function createServices(config: AppConfig, locationSearch: string): Servi
     recentSearches: createRecentSearches(localRecentSearchStorage()),
     queryInterpreter: config.smartSearch ? new RuleBasedInterpreter() : null,
     mockControls: config.enableMockControls ? mockControls : null,
-    features: { cart: config.cart, share: config.share, productPage: config.productPage },
+    features: {
+      cart: config.cart,
+      share: config.share,
+      productPage: config.productPage,
+      buyButtons: config.buyButtons,
+    },
   };
 }
 

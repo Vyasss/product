@@ -38,7 +38,7 @@ export function PurchasePanel({ product }: { product: Product }) {
       )}
       <div className="flex flex-wrap gap-3">
         <Button
-          variant="primary"
+          variant="outline"
           className="min-w-40 flex-1"
           disabled={reason !== null}
           onClick={() => {
@@ -51,7 +51,7 @@ export function PurchasePanel({ product }: { product: Product }) {
           Add to cart
         </Button>
         <Button
-          variant="accent"
+          variant="primary"
           className="min-w-40 flex-1"
           disabled={!product.inStock}
           onClick={() => buyNow(product)}

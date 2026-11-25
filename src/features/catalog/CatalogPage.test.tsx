@@ -203,7 +203,7 @@ describe('CatalogPage add-ons (flags on)', () => {
     await resultsHeading('12 results');
 
     expect(screen.getByRole('complementary', { name: 'Mock API controls' })).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Simulate API failure (500)' }));
+    await user.click(screen.getByRole('button', { name: 'Simulate API failure' }));
     const retry = await screen.findByRole('button', { name: 'Retry' });
     expect(screen.getByText(/status 500/)).toBeInTheDocument();
 

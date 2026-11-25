@@ -7,9 +7,9 @@ import { cardHeightRem } from './ProductGrid';
 const PLACEHOLDER_CARDS = 8;
 
 function GridSkeleton() {
-  const { cart } = useFeatures();
+  const { buyButtons } = useFeatures();
   return (
-    <Card aria-hidden="true" className="flex flex-col overflow-hidden" style={{ height: `${cardHeightRem('grid', cart)}rem` }}>
+    <Card aria-hidden="true" className="flex flex-col overflow-hidden" style={{ height: `${cardHeightRem('grid', buyButtons)}rem` }}>
       <Skeleton className="h-44 rounded-none" />
       <div className="flex flex-1 flex-col gap-2 p-3">
         <Skeleton className="h-3 w-1/3" />
@@ -24,9 +24,9 @@ function GridSkeleton() {
 }
 
 function ListSkeleton() {
-  const { cart } = useFeatures();
+  const { buyButtons } = useFeatures();
   return (
-    <Card aria-hidden="true" className="flex overflow-hidden" style={{ height: `${cardHeightRem('list', cart)}rem` }}>
+    <Card aria-hidden="true" className="flex overflow-hidden" style={{ height: `${cardHeightRem('list', buyButtons)}rem` }}>
       <Skeleton className="h-full w-32 shrink-0 rounded-none" />
       <div className="flex flex-1 flex-col gap-2 p-3">
         <Skeleton className="h-3 w-1/3" />

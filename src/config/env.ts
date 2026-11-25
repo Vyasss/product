@@ -7,7 +7,7 @@ export interface AppConfig {
   apiBaseUrl: string | null;
   /** Mock only: probability in [0, 1] that a request fails with a simulated 500. */
   mockFailRate: number;
-  /** Show the on-page control that simulates a failed API response (mock service only). */
+  /** Show the on-page control that simulates a failed API response (mock service only; on by default). */
   enableMockControls: boolean;
   /** Show smart-search suggestions. */
   smartSearch: boolean;
@@ -17,6 +17,8 @@ export interface AppConfig {
   share: boolean;
   /** Product detail page at /product/:id; off, the app is the single catalog page. */
   productPage: boolean;
+  /** Add to cart and Buy now on every product card (on by default). */
+  buyButtons: boolean;
 }
 
 export type RawEnv = Readonly<Record<string, string | boolean | undefined>>;
@@ -30,6 +32,13 @@ function readFlag(env: RawEnv, key: string): boolean {
   const value = env[key];
   if (typeof value === 'boolean') return value;
   return value === 'true' || value === '1';
+}
+
+/** Like readFlag, but on unless the variable says "false" or "0". */
+function readFlagDefaultOn(env: RawEnv, key: string): boolean {
+  const value = env[key];
+  if (typeof value === 'boolean') return value;
+  return value !== 'false' && value !== '0';
 }
 
 function readRate(env: RawEnv, key: string): number {
@@ -56,11 +65,12 @@ export function parseConfig(env: RawEnv): AppConfig {
   return {
     apiBaseUrl: readBaseUrl(env, 'VITE_API_BASE_URL'),
     mockFailRate: readRate(env, 'VITE_MOCK_FAIL_RATE'),
-    enableMockControls: readFlag(env, 'VITE_ENABLE_MOCK_CONTROLS'),
+    enableMockControls: readFlagDefaultOn(env, 'VITE_ENABLE_MOCK_CONTROLS'),
     smartSearch: readFlag(env, 'VITE_FEATURE_SMART_SEARCH'),
     cart: readFlag(env, 'VITE_FEATURE_CART'),
     share: readFlag(env, 'VITE_FEATURE_SHARE'),
     productPage: readFlag(env, 'VITE_FEATURE_PRODUCT_PAGE'),
+    buyButtons: readFlagDefaultOn(env, 'VITE_FEATURE_BUY_BUTTONS'),
   };
 }
 
@@ -72,4 +82,5 @@ export const appConfig: AppConfig = parseConfig({
   VITE_FEATURE_CART: import.meta.env.VITE_FEATURE_CART,
   VITE_FEATURE_SHARE: import.meta.env.VITE_FEATURE_SHARE,
   VITE_FEATURE_PRODUCT_PAGE: import.meta.env.VITE_FEATURE_PRODUCT_PAGE,
+  VITE_FEATURE_BUY_BUTTONS: import.meta.env.VITE_FEATURE_BUY_BUTTONS,
 });

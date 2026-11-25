@@ -18,7 +18,7 @@ const MIN_PHRASE_PRODUCTS = 2;
 /** Single words shorter than this are model codes and the like ("z4"), not things to search for. */
 const MIN_SINGLE_WORD_LENGTH = 3;
 const TRAILING_PUNCTUATION = /[:;,.!?]+$/;
-const MIN_QUERY_LENGTH = 2;
+const MIN_QUERY_LENGTH = 1;
 
 /**
  * Phrases worth completing to, taken from the catalog itself so they always lead to results:
@@ -84,12 +84,12 @@ export function buildSuggestionEntries(products: readonly Product[]): Suggestion
  * in the phrase, so "run sh" finds "running shoes" and "sho" finds "running shoes" too.
  * Order: phrases that begin with the typed text, then by how many products they cover, then
  * shorter, then alphabetical. A phrase identical to the query is left out (nothing to complete),
- * and a single typed letter gets no suggestions.
+ * and suggestions start from the first typed letter.
  */
 export function suggest(query: string, entries: readonly SuggestionEntry[], limit = 6): SuggestionEntry[] {
   const tokens = tokenize(query);
   const typed = tokens.join(' ');
-  // One letter matches half the catalog; wait for a second one.
+  // From the first letter: the most common phrases starting with it come first.
   if (typed.length < MIN_QUERY_LENGTH) return [];
 
   const matches: { entry: SuggestionEntry; leading: boolean }[] = [];

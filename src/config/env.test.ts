@@ -2,15 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { parseConfig } from './env';
 
 describe('parseConfig', () => {
-  it('defaults to the mock service with add-ons off', () => {
+  it('defaults to the mock service with its failure button and the buy buttons on, other add-ons off', () => {
     expect(parseConfig({})).toEqual({
       apiBaseUrl: null,
       mockFailRate: 0,
-      enableMockControls: false,
+      enableMockControls: true,
       smartSearch: false,
       cart: false,
       share: false,
       productPage: false,
+      buyButtons: true,
     });
   });
 
@@ -24,6 +25,7 @@ describe('parseConfig', () => {
         VITE_FEATURE_CART: 'true',
         VITE_FEATURE_SHARE: 'true',
         VITE_FEATURE_PRODUCT_PAGE: 'true',
+        VITE_FEATURE_BUY_BUTTONS: 'true',
       }),
     ).toEqual({
       apiBaseUrl: 'https://api.example.com/v1',
@@ -33,6 +35,7 @@ describe('parseConfig', () => {
       cart: true,
       share: true,
       productPage: true,
+      buyButtons: true,
     });
   });
 
@@ -55,5 +58,16 @@ describe('parseConfig', () => {
   it('treats anything but "true" or "1" as off', () => {
     expect(parseConfig({ VITE_FEATURE_SMART_SEARCH: 'yes' }).smartSearch).toBe(false);
     expect(parseConfig({ VITE_FEATURE_CART: 'on', VITE_FEATURE_SHARE: 'TRUE' })).toMatchObject({ cart: false, share: false });
+  });
+
+  it('turns the failure button and the buy buttons off only when told to', () => {
+    expect(parseConfig({ VITE_ENABLE_MOCK_CONTROLS: 'false', VITE_FEATURE_BUY_BUTTONS: '0' })).toMatchObject({
+      enableMockControls: false,
+      buyButtons: false,
+    });
+    expect(parseConfig({ VITE_ENABLE_MOCK_CONTROLS: '', VITE_FEATURE_BUY_BUTTONS: 'yes' })).toMatchObject({
+      enableMockControls: true,
+      buyButtons: true,
+    });
   });
 });

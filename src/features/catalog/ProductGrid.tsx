@@ -90,8 +90,8 @@ export const ProductGrid = memo(function ProductGrid({
 
   const gapPx = GAP_REM * rootFontSize;
   const columns = columnsForWidth(width, gapPx);
-  const { cart } = useFeatures();
-  const { layout, heightRem } = layoutForColumns(columns, cart);
+  const { buyButtons } = useFeatures();
+  const { layout, heightRem } = layoutForColumns(columns, buyButtons);
   const cardHeightPx = heightRem * rootFontSize;
   const total = indices.length;
   const rowCount = Math.ceil(total / columns);

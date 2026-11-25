@@ -1,6 +1,6 @@
 import type { ComponentPropsWithRef } from 'react';
 
-export type ButtonVariant = 'primary' | 'accent' | 'secondary' | 'ghost';
+export type ButtonVariant = 'primary' | 'outline' | 'accent' | 'secondary' | 'ghost';
 
 export interface ButtonProps extends ComponentPropsWithRef<'button'> {
   variant?: ButtonVariant;
@@ -12,6 +12,7 @@ const BASE =
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: 'bg-brand text-white shadow-card hover:bg-brand-strong',
+  outline: 'border-2 border-brand bg-card text-brand-ink hover:bg-brand-soft',
   accent: 'bg-accent text-ink shadow-card hover:bg-accent-strong',
   secondary: 'border border-line-strong bg-card text-ink hover:border-brand hover:bg-brand-soft',
   ghost: 'text-brand-ink underline-offset-4 hover:bg-brand-soft hover:underline',

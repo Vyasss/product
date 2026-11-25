@@ -13,6 +13,8 @@ export interface Features {
   share: boolean;
   /** Product detail page; off, cards are not links and the app is one page. */
   productPage: boolean;
+  /** Add to cart and Buy now on cards; without `cart`, Buy now adds and says checkout is not included. */
+  buyButtons: boolean;
 }
 
 /**
@@ -33,7 +35,7 @@ export interface Services {
   queryInterpreter: QueryInterpreter | null;
   /** Non-null only when VITE_ENABLE_MOCK_CONTROLS is on and the mock service is used. */
   mockControls: MockControls | null;
-  /** VITE_FEATURE_CART, VITE_FEATURE_SHARE and VITE_FEATURE_PRODUCT_PAGE. */
+  /** VITE_FEATURE_CART, VITE_FEATURE_SHARE, VITE_FEATURE_PRODUCT_PAGE, VITE_FEATURE_BUY_BUTTONS. */
   features: Features;
 }
 

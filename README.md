@@ -5,9 +5,9 @@ browser, presented as an invented storefront called **AllinONE** in the colours 
 Life Insurance (MLI). Filter state lives in the URL, every control works from the keyboard, and
 the build is a static bundle for S3 + CloudFront.
 
-The default build is exactly the brief: **one catalog page**, and each product card shows the
-eight fields of the `Product` interface and nothing else. A product detail page, a cart with
-Buy now and a demo checkout, and share buttons are built and tested but **off by default**;
+The default build is **one catalog page**. Each product card shows the eight fields of the
+`Product` interface (no extra data) plus Add to cart and Buy now. A product detail page, the
+cart page with a demo checkout, and share buttons are built and tested but **off by default**;
 see [Configuration](#configuration).
 
 **Live demo:** https://d3t07ggz1uw32y.cloudfront.net (S3 + CloudFront, mock data).
@@ -15,9 +15,9 @@ see [Configuration](#configuration).
 ![Desktop catalog at 1440 px: sticky header with search and cart, filter sidebar, results bar with chips, product grid](docs/screenshots/catalog-1440.png)
 
 The screenshots in this README predate the MLI colours and were taken with the optional
-features on. The default build (and the live demo) uses the MLI palette below, is one page,
-has no cart link, Share button or product links, and its cards show the eight `Product` fields
-only (no description or review count).
+features on. The default build (and the live demo) uses the MLI palette below and is one page:
+no cart link, Share button or product links, and cards show the eight `Product` fields (no
+description or review count) with Add to cart and Buy now.
 
 - [Quick start](#quick-start)
 - [Brief requirements and add-ons](#brief-requirements-and-add-ons)
@@ -96,7 +96,7 @@ the brief's eight fields, and the mock API returns exactly that shape.
 | No lag typing or rendering large lists; justified strategy; no redundant re-renders | Row virtualisation, deferred search, memoised cards, cheap per-card cart subscription | `ProductGrid.tsx`, `ProductCard.tsx` | `npm run bench`, `npm run perf`, e2e DOM-count test |
 | Client-side routing on S3 + CloudFront with fallback to `/index.html` | CloudFront Function rewrites extension-less paths (`/product/p-00042`, `/cart`, `/checkout`) | `infra/cloudfront/spa-rewrite.js`, `src/app/router.tsx` | e2e `cloudfront.spec.ts` (runs the function in a VM), e2e deep-link reloads |
 | No hardcoded secrets; `VITE_*` config | One module reads `import.meta.env` and validates it | `src/config/env.ts`, `.env.example` | `env.test.ts` |
-| Vitest + RTL tests: core filter/sort logic and a user flow | 520 tests in 30 files | `src/**/*.test.ts(x)` | `npm test` |
+| Vitest + RTL tests: core filter/sort logic and a user flow | 521 tests in 30 files | `src/**/*.test.ts(x)` | `npm test` |
 | README with setup, architecture, performance, CloudFront notes, improvements | This file | `README.md` | n/a |
 
 ### Add-ons beyond the brief
@@ -172,7 +172,7 @@ every keystroke exactly as before: a suggestion is only applied when it is picke
   come from the titles, every suggestion finds products. Product types rise to the top by
   count ("sma" gives smart watch, smart tv, smartphone before any single model), and a
   fragment that only ever occurs inside one longer phrase is dropped ("yoga" in favour of
-  "yoga mat"). One typed letter gets no suggestions.
+  "yoga mat"). Suggestions start from the first typed letter.
 - **Recent searches.** The last five searches confirmed with Enter or by picking a suggestion
   are kept in this browser's storage and offered when the box is empty or they match what is
   typed. Nothing is sent anywhere; unreadable stored data is ignored.
@@ -273,7 +273,7 @@ in the font stack where it is installed. Nothing is fetched from a CDN.
 | Header | Sticky navy bar: wordmark (bag mark only on phones), visible "Search products" label, search field with icon and Clear button (cart link with count badge when the cart is on). One compact row on phones (72 px). |
 | Results bar | "N results for “q”", Filters button (below 1024 px), Sort select, relaxation note, chips and Clear all. Sticky under the header from 768 px up; on phones it scrolls away so the pinned area stays at 72 px. |
 | Filter sidebar | Card with Category, Price and Availability sections and right-aligned facet counts; stays in view. Below 1024 px the same panel opens in a drawer with a sticky "Show N results" button. |
-| Product card | The eight `Product` fields and nothing else: illustration (`thumbnailUrl`) with category badge, brand, two-line title, star rating with its value, price with a raised ₹, stock line. With the optional features on, the title is a link to the product page (with hover cues on pointer devices) and Add to cart / Buy now sit at the bottom. Fixed height: 21 rem in the grid and 9.375 rem in the phone list layout by default (24.125 and 13.25 rem with the cart buttons), so the last line sits on the bottom padding (checked in Chrome at 1440, 768, 390 and 320 px). All text clamps. |
+| Product card | The eight `Product` fields: illustration (`thumbnailUrl`) with category badge, brand, two-line title, star rating with its value, price with a raised ₹, stock line ("1 in cart" after adding). Then Add to cart (burgundy outline) and Buy now (solid burgundy). Without the cart page, Buy now adds the product and announces that checkout is not part of the demo. With the product page on, the title is a link (with hover cues on pointer devices). Fixed height: 24.125 rem in the grid and 13.25 rem in the phone list layout (21 and 9.375 rem with `VITE_FEATURE_BUY_BUTTONS=false`), so the last line sits on the bottom padding (checked in Chrome at 1440, 768, 390 and 320 px). All text clamps. |
 | Pages | One catalog page by default. With the optional features on, the product page, cart, checkout, confirmation and 404 share one layout with a header search that opens the catalog. |
 | States | Shimmer skeletons matching both card layouts; error state with Retry; empty state with Clear all and, after a search, up to ten catalog brands (two per category) to search instead, since the brands are invented and a real one such as "samsung" finds nothing. |
 | Pagination | "Showing 61–120 of 317", then Previous, numbered pages and Next; phones get "Page 3 of 6" between the arrows. |
@@ -561,10 +561,11 @@ public; there are no secrets. `VITE_API_BASE_URL` (real API), `VITE_MOCK_FAIL_RA
 | `VITE_FEATURE_CART` | off | Add to cart and Buy now on cards and the product page, header cart link, `/cart`, `/checkout` |
 | `VITE_FEATURE_SHARE` | off | Share buttons on the catalog, product page and cart (copy link, WhatsApp, email, Teams) |
 | `VITE_FEATURE_SMART_SEARCH` | off | "Shoes under 5000 in stock" offered as filters |
-| `VITE_ENABLE_MOCK_CONTROLS` | off | A "Simulate API failure (500)" button under the results bar |
+| `VITE_FEATURE_BUY_BUTTONS` | **on** | Add to cart and Buy now on every card (`false` hides them) |
+| `VITE_ENABLE_MOCK_CONTROLS` | **on** | A "Simulate API failure" button under the results bar: the next load fails with a simulated 500, the error state shows, Retry recovers (`false` hides it) |
 
-To see the error state and its Retry button on any build, add `?mockFail=1` to the URL: the
-first load fails with a simulated 500 (`?mockFail=2` fails two loads).
+Without the button, `?mockFail=1` in the URL does the same: the first load fails with a
+simulated 500 (`?mockFail=2` fails two loads).
 
 Flags reach the UI through `Services.features` (`useFeatures()`), so a component never reads
 the environment, and tests choose features per render. A feature that is off is not rendered at
@@ -609,7 +610,7 @@ script file itself has not been run.
 
 ## Tests
 
-`npm test`: **520 tests in 30 files** (Vitest, jsdom, React Testing Library, user-event):
+`npm test`: **521 tests in 30 files** (Vitest, jsdom, React Testing Library, user-event):
 generator (determinism, checksum, price spread, illustrations for every item type), mock
 service, engine filters and sorts, conversational search (stop words, fallback, typo table
 including brand typos, short-token and correct-query cases), URL codec, smart-search phrases,
@@ -619,12 +620,13 @@ cart summary, checkout validation, related products, star rating, price formatti
 helpers (columns, layout, pinned focused row), catalog interactions (flags off), cart/product/
 checkout interactions, the default build without cart and share, and an axe scan.
 
-`npm run e2e`: **83 tests in real Chrome** (about 1.5 minutes), against two production builds
+`npm run e2e`: **85 tests in real Chrome** (about 1.6 minutes), against two production builds
 served side by side from `.e2e/` (so `dist/` is never overwritten): 72 with the optional
-features on, and 11 on the default build (`default-build.spec.ts`: cards show the product
-fields only and fit at 1440, 768, 390 and 320 px; no links, cart or share controls;
-`/product/:id`, `/cart` and `/checkout` are 404; `?mockFail=1` shows the error state with a
-focused Retry that recovers; an unknown brand offers the catalog brands; axe).
+features on, and 13 on the default build (`default-build.spec.ts`: cards show the product
+fields and the buy buttons and fit at 1440, 768, 390 and 320 px; no product links, cart link
+or Share; `/product/:id`, `/cart` and `/checkout` are 404; the Simulate API failure button and
+`?mockFail=1` show the error state with a focused Retry that recovers; Buy now adds and stays
+on the page; an unknown brand offers the catalog brands; axe).
 - **Pages:** Next page by keyboard moves focus to the results heading; reload and Back keep the
   page in step with the URL; a shared `?page=3` opens page 3; a filter change returns to page 1;
   compact controls at 320 px.
@@ -665,14 +667,14 @@ focused Retry that recovers; an unknown brand offers the catalog brands; axe).
 
 Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 
-- `npm run typecheck`, `npm run lint` exit 0; `npm test` 520 passed in 30 files;
-  `npm run e2e` 83 passed in real Chrome, including axe on every main page.
+- `npm run typecheck`, `npm run lint` exit 0; `npm test` 521 passed in 30 files;
+  `npm run e2e` 85 passed in real Chrome, including axe on every main page.
 - The S3 + CloudFront deployment: see the checks listed under "Deploying to S3 + CloudFront".
-- Build: main JS 319.38 kB (102.69 kB gzip), CSS 39.31 kB (8.59 kB gzip); lazy chunks
-  StorePage 59.56 kB (21.23 kB gzip, shared by the product, cart and checkout pages),
-  CartPage 7.12 kB (2.71 kB gzip), ProductPage 6.56 kB (2.61 kB gzip), CheckoutPage 5.53 kB
-  (2.46 kB gzip), QuantityStepper 1.40 kB, ConfirmationPage 1.25 kB. Fonts: Inter 48.25 kB
-  and Playfair Display 38.40 kB (Latin, woff2, already compressed).
+- Build (default flags): main JS 329.13 kB (106.25 kB gzip), CSS 38.01 kB (8.48 kB gzip).
+  Lazy chunks, loaded only when their optional feature is on: StorePage 62.88 kB (22.48 kB
+  gzip, shared by the product, cart and checkout pages), CartPage 7.12 kB, ProductPage 6.63 kB,
+  CheckoutPage 5.53 kB, QuantityStepper 1.41 kB, ConfirmationPage 1.26 kB. Font: Inter
+  48.25 kB (Latin, woff2, already compressed).
 - Pinned area on 390×844 after scrolling: 72 px. Cards in the DOM while scrolling the whole
   list: at most 32 at 1440 px, 9 at 390 px.
 - Throttled-Chrome numbers above: measured on the current build with local servers

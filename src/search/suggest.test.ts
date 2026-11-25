@@ -82,9 +82,9 @@ describe('suggest', () => {
     expect(texts('sh', 2)).toHaveLength(2);
   });
 
-  it('waits for a second letter', () => {
-    expect(texts('s')).toEqual([]);
-    expect(texts('sh').length).toBeGreaterThan(0);
+  it('suggests from the first letter: phrases starting with it first, then by product count', () => {
+    expect(texts('s')).toEqual(['shoes', 'Stridex', 'smart tv', 'formal shoes', 'running shoes']);
+    expect(texts('v')).toEqual(['Voltix']);
   });
 });
 
