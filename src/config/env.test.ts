@@ -8,6 +8,8 @@ describe('parseConfig', () => {
       mockFailRate: 0,
       enableMockControls: false,
       smartSearch: false,
+      cart: false,
+      share: false,
     });
   });
 
@@ -18,12 +20,16 @@ describe('parseConfig', () => {
         VITE_MOCK_FAIL_RATE: '0.25',
         VITE_ENABLE_MOCK_CONTROLS: 'true',
         VITE_FEATURE_SMART_SEARCH: '1',
+        VITE_FEATURE_CART: 'true',
+        VITE_FEATURE_SHARE: 'true',
       }),
     ).toEqual({
       apiBaseUrl: 'https://api.example.com/v1',
       mockFailRate: 0.25,
       enableMockControls: true,
       smartSearch: true,
+      cart: true,
+      share: true,
     });
   });
 
@@ -45,5 +51,6 @@ describe('parseConfig', () => {
 
   it('treats anything but "true" or "1" as off', () => {
     expect(parseConfig({ VITE_FEATURE_SMART_SEARCH: 'yes' }).smartSearch).toBe(false);
+    expect(parseConfig({ VITE_FEATURE_CART: 'on', VITE_FEATURE_SHARE: 'TRUE' })).toMatchObject({ cart: false, share: false });
   });
 });

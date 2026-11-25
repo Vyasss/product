@@ -2,6 +2,7 @@ import { memo, type Ref } from 'react';
 import { Button } from '../../components/ui/Button';
 import { FilterIcon } from '../../components/ui/icons';
 import type { FilterPatch, FilterState, SortKey } from '../../domain/filters';
+import { useFeatures } from '../../hooks/useServices';
 import { ActiveFilterChips } from './ActiveFilterChips';
 import { pluralizeResults } from '../shared/format';
 import { ShareButton } from '../shared/ShareButton';
@@ -64,6 +65,7 @@ export const ResultSummary = memo(function ResultSummary({
   onOpenFilters,
   headingRef,
 }: ResultSummaryProps) {
+  const { share } = useFeatures();
   const filterCount = activeFilterCount(filters);
   // Pinned under the header from 768 px up; on phones it scrolls away to keep the pinned area small.
   return (
@@ -77,9 +79,11 @@ export const ResultSummary = memo(function ResultSummary({
           <Heading status={status} total={total} query={query} />
         </h2>
         {/* Phones: Share sits beside the count and the controls take the next line. Wider: one row. */}
-        <div className="md:order-last">
-          <ShareButton compact />
-        </div>
+        {share && (
+          <div className="md:order-last">
+            <ShareButton compact />
+          </div>
+        )}
         <div className="flex max-w-full items-center gap-2 max-md:basis-full max-[359px]:flex-wrap">
           <Button className="lg:hidden" onClick={onOpenFilters}>
             <FilterIcon className="size-4" />

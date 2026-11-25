@@ -9,12 +9,12 @@ import { StarRating } from '../../components/ui/StarRating';
 import type { Product } from '../../domain/product';
 import { useCatalogData } from '../../hooks/useCatalogData';
 import { SITE_NAME, useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
-import { useServices } from '../../hooks/useServices';
+import { useFeatures, useServices } from '../../hooks/useServices';
 import { PurchasePanel } from '../cart/PurchasePanel';
 import { ErrorState } from '../shared/ErrorState';
 import { formatPrice } from '../shared/format';
 import { Price } from '../shared/Price';
-import { CARD_HEIGHT_REM } from '../catalog/ProductGrid';
+import { cardHeightRem } from '../catalog/ProductGrid';
 import { ProductCard } from '../catalog/ProductCard';
 import { ShareButton } from '../shared/ShareButton';
 import { StateMessage } from '../../components/ui/StateMessage';
@@ -45,6 +45,7 @@ function BackAction() {
 
 function RelatedStrip({ title, products }: { title: string; products: readonly Product[] }) {
   const headingId = useId();
+  const { cart } = useFeatures();
   if (products.length === 0) return null;
   return (
     <section aria-labelledby={headingId} className="mt-12">
@@ -53,7 +54,7 @@ function RelatedStrip({ title, products }: { title: string; products: readonly P
       </h2>
       <div role="list" className="grid grid-cols-[repeat(auto-fill,minmax(13.75rem,1fr))] gap-4">
         {products.map((product, index) => (
-          <div key={product.id} role="presentation" style={{ height: `${CARD_HEIGHT_REM}rem` }}>
+          <div key={product.id} role="presentation" style={{ height: `${cardHeightRem('grid', cart)}rem` }}>
             <ProductCard product={product} position={index + 1} setSize={products.length} layout="grid" from="product" />
           </div>
         ))}
@@ -63,7 +64,7 @@ function RelatedStrip({ title, products }: { title: string; products: readonly P
 }
 
 function ProductDetail({ product, headingRef }: { product: Product; headingRef: Ref<HTMLHeadingElement> }) {
-  const { productContent } = useServices();
+  const { productContent, features } = useServices();
   const { products } = useCatalogData();
   const content = useMemo(() => productContent.contentFor(product), [productContent, product]);
   const related = useMemo(
@@ -97,15 +98,17 @@ function ProductDetail({ product, headingRef }: { product: Product; headingRef: 
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <Badge tone="brand">{product.category}</Badge>
             <StarRating value={product.rating} reviewCount={content.reviewCount} />
-            <div className="ml-auto">
-              <ShareButton
-                label="Share this product"
-                getText={() =>
-                  `${product.title} by ${product.brand}, ${formatPrice(product.price)}` +
-                  `${product.inStock ? '' : ' (currently unavailable)'} on ${SITE_NAME}`
-                }
-              />
-            </div>
+            {features.share && (
+              <div className="ml-auto">
+                <ShareButton
+                  label="Share this product"
+                  getText={() =>
+                    `${product.title} by ${product.brand}, ${formatPrice(product.price)}` +
+                    `${product.inStock ? '' : ' (currently unavailable)'} on ${SITE_NAME}`
+                  }
+                />
+              </div>
+            )}
           </div>
           <Price value={product.price} size="lg" className="mt-5" />
           <p className={`mt-2 text-base font-semibold ${product.inStock ? 'text-success' : 'text-danger'}`}>
@@ -121,7 +124,7 @@ function ProductDetail({ product, headingRef }: { product: Product; headingRef: 
               </li>
             ))}
           </ul>
-          <PurchasePanel product={product} />
+          {features.cart && <PurchasePanel product={product} />}
           <p className="mt-3 text-xs text-ink-muted">
             Description, highlights and review count are generated demo content.
           </p>

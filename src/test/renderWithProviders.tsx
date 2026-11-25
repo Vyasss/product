@@ -8,12 +8,14 @@ import type { AppConfig } from '../config/env';
 import type { Services } from '../hooks/useServices';
 import { createTestServices } from './fixtures';
 
-/** Both feature flags off: the core catalog must work without them. */
+/** Every flag off: the core catalog must work without them. Tests choose features through services. */
 export const TEST_CONFIG: AppConfig = {
   apiBaseUrl: null,
   mockFailRate: 0,
   enableMockControls: false,
   smartSearch: false,
+  cart: false,
+  share: false,
 };
 
 function LocationSpy({ onChange }: { onChange: (search: string) => void }) {

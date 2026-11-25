@@ -36,7 +36,8 @@ import { useSearchText } from './useSearchText';
 const EMPTY_PARAMS = new URLSearchParams();
 
 export function CatalogPage() {
-  const { createSearchEngine, queryInterpreter, mockControls } = useServices();
+  const { createSearchEngine, queryInterpreter, mockControls, features } = useServices();
+  const { cart } = features;
   const { products: productsState } = useCatalogData();
   const { retry } = productsState;
   const { filters, update } = useFilterState();
@@ -164,7 +165,7 @@ export function CatalogPage() {
             </span>
           </h1>
         }
-        actions={<CartButton />}
+        actions={cart ? <CartButton /> : undefined}
       >
         <SearchBox
           value={search.text}

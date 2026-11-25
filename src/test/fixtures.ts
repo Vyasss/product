@@ -4,7 +4,7 @@ import { templateProductContent } from '../data/productContent';
 import { MockProductService } from '../data/MockProductService';
 import { ApiError, createAbortError, type ProductService } from '../data/ProductService';
 import type { Product } from '../domain/product';
-import type { Services } from '../hooks/useServices';
+import type { Features, Services } from '../hooks/useServices';
 import { createInMemorySearchEngine } from '../search/InMemorySearchEngine';
 import { createRecentSearches, memoryRecentSearchStorage } from '../search/recentSearches';
 import { RuleBasedInterpreter } from '../smart-search/RuleBasedInterpreter';
@@ -63,11 +63,16 @@ export class FakeProductService implements ProductService {
 
 export interface TestServicesOptions {
   service?: ProductService;
-  /** Optional features are off unless a test turns them on. */
+  /** Smart search and mock controls are off unless a test turns them on. */
   smartSearch?: boolean;
   mockControls?: boolean;
   /** Pass a store on a shared memory backend to simulate a reload. */
   cartStore?: CartStore;
+  /**
+   * Cart and share default to on here, so the tests of those features need no setup;
+   * the shipped default (both off) is covered by tests that pass `{ cart: false, share: false }`.
+   */
+  features?: Partial<Features>;
 }
 
 export function createTestServices(options: TestServicesOptions = {}): Services {
@@ -84,6 +89,7 @@ export function createTestServices(options: TestServicesOptions = {}): Services 
       mockControls: failurePolicy,
       cartStore: options.cartStore ?? createCartStore(memoryCartStorage()),
       productContent: templateProductContent,
+      features: { cart: true, share: true, ...options.features },
     };
   }
   return {
@@ -94,5 +100,6 @@ export function createTestServices(options: TestServicesOptions = {}): Services 
     mockControls: null,
     cartStore: options.cartStore ?? createCartStore(memoryCartStorage()),
     productContent: templateProductContent,
+    features: { cart: true, share: true, ...options.features },
   };
 }

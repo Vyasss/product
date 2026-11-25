@@ -4,6 +4,7 @@ import { SiteFooter } from '../../components/layout/SiteFooter';
 import { SiteHeader } from '../../components/layout/SiteHeader';
 import { Wordmark } from '../../components/layout/Wordmark';
 import { CartButton } from '../cart/CartButton';
+import { useFeatures } from '../../hooks/useServices';
 import { QuickSearch } from '../catalog/QuickSearch';
 
 export interface StorePageProps {
@@ -18,6 +19,7 @@ export interface StorePageProps {
  * the catalog, so the browser's restoration is off.
  */
 export function StorePage({ children, width = 'wide' }: StorePageProps) {
+  const { cart } = useFeatures();
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, []);
@@ -39,7 +41,7 @@ export function StorePage({ children, width = 'wide' }: StorePageProps) {
             </span>
           </Link>
         }
-        actions={<CartButton />}
+        actions={cart ? <CartButton /> : undefined}
       >
         <QuickSearch />
       </SiteHeader>

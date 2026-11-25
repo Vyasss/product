@@ -11,6 +11,10 @@ export interface AppConfig {
   enableMockControls: boolean;
   /** Show smart-search suggestions. */
   smartSearch: boolean;
+  /** Add to cart, Buy now, the cart and the demo checkout. */
+  cart: boolean;
+  /** Share buttons (copy link, WhatsApp, email, Teams). The URL alone still restores a view. */
+  share: boolean;
 }
 
 export type RawEnv = Readonly<Record<string, string | boolean | undefined>>;
@@ -52,6 +56,8 @@ export function parseConfig(env: RawEnv): AppConfig {
     mockFailRate: readRate(env, 'VITE_MOCK_FAIL_RATE'),
     enableMockControls: readFlag(env, 'VITE_ENABLE_MOCK_CONTROLS'),
     smartSearch: readFlag(env, 'VITE_FEATURE_SMART_SEARCH'),
+    cart: readFlag(env, 'VITE_FEATURE_CART'),
+    share: readFlag(env, 'VITE_FEATURE_SHARE'),
   };
 }
 
@@ -60,4 +66,6 @@ export const appConfig: AppConfig = parseConfig({
   VITE_MOCK_FAIL_RATE: import.meta.env.VITE_MOCK_FAIL_RATE,
   VITE_ENABLE_MOCK_CONTROLS: import.meta.env.VITE_ENABLE_MOCK_CONTROLS,
   VITE_FEATURE_SMART_SEARCH: import.meta.env.VITE_FEATURE_SMART_SEARCH,
+  VITE_FEATURE_CART: import.meta.env.VITE_FEATURE_CART,
+  VITE_FEATURE_SHARE: import.meta.env.VITE_FEATURE_SHARE,
 });

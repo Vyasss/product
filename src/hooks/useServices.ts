@@ -7,6 +7,12 @@ import type { RecentSearches } from '../search/recentSearches';
 import type { SearchEngineFactory } from '../search/SearchEngine';
 import type { QueryInterpreter } from '../smart-search/QueryInterpreter';
 
+/** Optional storefront features, fixed at build time. Off means the UI is not rendered at all. */
+export interface Features {
+  cart: boolean;
+  share: boolean;
+}
+
 /**
  * Everything the UI needs from the outside world, as interfaces. Implementations are chosen
  * once in `app/ServicesProvider` and tests inject fakes. Optional services are present only when enabled:
@@ -25,6 +31,8 @@ export interface Services {
   queryInterpreter: QueryInterpreter | null;
   /** Non-null only when VITE_ENABLE_MOCK_CONTROLS is on and the mock service is used. */
   mockControls: MockControls | null;
+  /** VITE_FEATURE_CART and VITE_FEATURE_SHARE. */
+  features: Features;
 }
 
 export const ServicesContext = createContext<Services | null>(null);
@@ -35,4 +43,8 @@ export function useServices(): Services {
     throw new Error('useServices() must be used inside <ServicesProvider>.');
   }
   return services;
+}
+
+export function useFeatures(): Features {
+  return useServices().features;
 }

@@ -19,7 +19,7 @@ const boundary = (files, patterns, message) => ({
 });
 
 export default tseslint.config(
-  { ignores: ['dist', 'coverage', 'node_modules', 'test-results', 'playwright-report'] },
+  { ignores: ['dist', '.e2e', 'coverage', 'node_modules', 'test-results', 'playwright-report'] },
   js.configs.recommended,
   {
     files: ['**/*.{ts,tsx}'],

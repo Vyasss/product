@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router';
 import { Skeleton } from '../components/ui/Skeleton';
 import { CatalogPage } from '../features/catalog/CatalogPage';
 import { NotFoundPage } from '../features/not-found/NotFoundPage';
+import { useFeatures } from '../hooks/useServices';
 import { browserReloadEnvironment, loadWithReload } from './lazyWithReload';
 
 // These pages are code-split so the catalog bundle stays small. A chunk that fails to load
@@ -28,15 +29,19 @@ function PageFallback() {
 
 const lazyPage = (page: ReactNode) => <Suspense fallback={<PageFallback />}>{page}</Suspense>;
 
-/** Route table, shared by the browser app and by tests (which wrap it in a MemoryRouter). */
+/**
+ * Route table, shared by the browser app and by tests (which wrap it in a MemoryRouter).
+ * With the cart feature off, the cart and checkout paths are unknown paths like any other.
+ */
 export function AppRoutes() {
+  const { cart } = useFeatures();
   return (
     <Routes>
       <Route path="/" element={<CatalogPage />} />
       <Route path="/product/:id" element={lazyPage(<ProductPage />)} />
-      <Route path="/cart" element={lazyPage(<CartPage />)} />
-      <Route path="/checkout" element={lazyPage(<CheckoutPage />)} />
-      <Route path="/checkout/confirmation" element={lazyPage(<ConfirmationPage />)} />
+      {cart && <Route path="/cart" element={lazyPage(<CartPage />)} />}
+      {cart && <Route path="/checkout" element={lazyPage(<CheckoutPage />)} />}
+      {cart && <Route path="/checkout/confirmation" element={lazyPage(<ConfirmationPage />)} />}
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

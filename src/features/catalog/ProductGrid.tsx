@@ -2,6 +2,7 @@ import { defaultRangeExtractor, useWindowVirtualizer, type Range } from '@tansta
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import type { Product } from '../../domain/product';
 import { useContainerWidth } from '../../hooks/useContainerWidth';
+import { useFeatures } from '../../hooks/useServices';
 import type { ScrollEntry } from '../../hooks/useScrollMemory';
 import { ProductCard, type CardLayout } from './ProductCard';
 
@@ -16,10 +17,15 @@ export interface ProductGridProps {
   onOpenProduct?: (productId: string) => void;
 }
 
-/** Grid card height (multi-column rows), in rem. */
+/** Grid card height (multi-column rows) with the Add to cart / Buy now row, in rem. */
 export const CARD_HEIGHT_REM = 26.5;
-/** List card height (one column: image left, details right), in rem. */
+/** List card height (one column: image left, details right) with the button row, in rem. */
 export const LIST_CARD_HEIGHT_REM = 15.5;
+/**
+ * How much shorter a card is without the Add to cart / Buy now row, so the last line sits on
+ * the card's bottom padding (measured in Chrome at 1440, 390 and 320 px).
+ */
+export const CARD_ACTIONS_REM = { grid: 3.125, list: 3.875 } as const;
 export const GAP_REM = 1;
 const MIN_CARD_WIDTH_PX = 220;
 const MAX_COLUMNS = 6;
@@ -34,10 +40,15 @@ function readRootFontSize(): number {
   return Number.isFinite(size) && size > 0 ? size : 16;
 }
 
-export function layoutForColumns(columns: number): { layout: CardLayout; heightRem: number } {
-  return columns === 1
-    ? { layout: 'list', heightRem: LIST_CARD_HEIGHT_REM }
-    : { layout: 'grid', heightRem: CARD_HEIGHT_REM };
+/** Fixed card height for a layout; cards without the cart buttons are shorter. */
+export function cardHeightRem(layout: CardLayout, withActions: boolean): number {
+  const full = layout === 'list' ? LIST_CARD_HEIGHT_REM : CARD_HEIGHT_REM;
+  return withActions ? full : full - CARD_ACTIONS_REM[layout];
+}
+
+export function layoutForColumns(columns: number, withActions = true): { layout: CardLayout; heightRem: number } {
+  const layout: CardLayout = columns === 1 ? 'list' : 'grid';
+  return { layout, heightRem: cardHeightRem(layout, withActions) };
 }
 
 export function columnsForWidth(width: number, gapPx: number): number {
@@ -73,7 +84,8 @@ export const ProductGrid = memo(function ProductGrid({
 
   const gapPx = GAP_REM * rootFontSize;
   const columns = columnsForWidth(width, gapPx);
-  const { layout, heightRem } = layoutForColumns(columns);
+  const { cart } = useFeatures();
+  const { layout, heightRem } = layoutForColumns(columns, cart);
   const cardHeightPx = heightRem * rootFontSize;
   const total = indices.length;
   const rowCount = Math.ceil(total / columns);

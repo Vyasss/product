@@ -18,10 +18,18 @@ test('full journey with the keyboard only: search, category, price, sort, clear 
   await expectResults(page, '317 results for “shoes”');
   await expectSearch(page, '?q=shoes');
 
-  // Tick a category with Space
+  // Tick a category with Space; Enter toggles a checkbox too (on and off again)
   await tabTo(page, page.getByRole('checkbox', { name: /^Apparel/ }));
   await page.keyboard.press('Space');
   await expectResults(page, '82 results for “shoes”');
+  await expectSearch(page, '?q=shoes&category=Apparel');
+  const sports = page.getByRole('checkbox', { name: /^Sports/ });
+  await tabTo(page, sports);
+  await page.keyboard.press('Enter');
+  await expect(sports).toBeChecked();
+  await expectSearch(page, '?q=shoes&category=Apparel,Sports');
+  await page.keyboard.press('Enter');
+  await expect(sports).not.toBeChecked();
   await expectSearch(page, '?q=shoes&category=Apparel');
 
   // Set a maximum price, committed with Enter

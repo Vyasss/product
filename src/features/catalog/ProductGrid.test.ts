@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { CARD_HEIGHT_REM, columnsForWidth, layoutForColumns, LIST_CARD_HEIGHT_REM, withPinnedRow } from './ProductGrid';
+import {
+  CARD_ACTIONS_REM,
+  CARD_HEIGHT_REM,
+  cardHeightRem,
+  columnsForWidth,
+  layoutForColumns,
+  LIST_CARD_HEIGHT_REM,
+  withPinnedRow,
+} from './ProductGrid';
 
 describe('columnsForWidth', () => {
   it.each([
@@ -19,6 +27,12 @@ describe('layoutForColumns', () => {
   it('uses compact list cards for one column and taller grid cards otherwise', () => {
     expect(layoutForColumns(1)).toEqual({ layout: 'list', heightRem: LIST_CARD_HEIGHT_REM });
     expect(layoutForColumns(3)).toEqual({ layout: 'grid', heightRem: CARD_HEIGHT_REM });
+  });
+
+  it('makes cards shorter by the button row when the cart is off', () => {
+    expect(layoutForColumns(1, false)).toEqual({ layout: 'list', heightRem: LIST_CARD_HEIGHT_REM - CARD_ACTIONS_REM.list });
+    expect(layoutForColumns(3, false)).toEqual({ layout: 'grid', heightRem: CARD_HEIGHT_REM - CARD_ACTIONS_REM.grid });
+    expect(cardHeightRem('grid', true)).toBe(CARD_HEIGHT_REM);
   });
 });
 

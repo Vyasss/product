@@ -6,7 +6,7 @@ import { StarRating } from '../../components/ui/StarRating';
 import { MAX_QUANTITY } from '../../cart/cartStore';
 import type { Product } from '../../domain/product';
 import { useCartQuantity } from '../../hooks/useCartQuantity';
-import { useServices } from '../../hooks/useServices';
+import { useFeatures, useServices } from '../../hooks/useServices';
 import { CardActions } from '../cart/CardActions';
 import { Price } from '../shared/Price';
 
@@ -52,7 +52,9 @@ function Thumbnail({ product, className }: { product: Product; className: string
 
 /** `compact` (phone list card) uses the short label so it fits beside the price. */
 function StockLine({ product, id, compact = false }: { product: Product; id: string; compact?: boolean }) {
-  const inCart = useCartQuantity(product.id);
+  const { cart } = useFeatures();
+  const quantity = useCartQuantity(product.id);
+  const inCart = cart ? quantity : 0;
   if (!product.inStock) {
     return (
       <p id={id} className="truncate text-sm font-semibold text-danger">
@@ -89,7 +91,7 @@ export const ProductCard = memo(function ProductCard({
 }: ProductCardProps) {
   const titleId = useId();
   const stockId = useId();
-  const { productContent } = useServices();
+  const { productContent, features } = useServices();
   const content = useMemo(() => productContent.contentFor(product), [productContent, product]);
 
   const listItem = {
@@ -147,7 +149,7 @@ export const ProductCard = memo(function ProductCard({
               <StockLine product={product} id={stockId} compact />
             </div>
           </div>
-          <CardActions product={product} reasonId={stockId} className="mt-auto" />
+          {features.cart && <CardActions product={product} reasonId={stockId} className="mt-auto" />}
         </div>
       </Card>
     );
@@ -166,7 +168,7 @@ export const ProductCard = memo(function ProductCard({
         {rating}
         <Price value={product.price} />
         <StockLine product={product} id={stockId} />
-        <CardActions product={product} reasonId={stockId} className="mt-auto" />
+        {features.cart && <CardActions product={product} reasonId={stockId} className="mt-auto" />}
       </div>
     </Card>
   );
