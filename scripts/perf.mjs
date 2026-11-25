@@ -116,7 +116,7 @@ try {
     const idle = await frameIntervals(page, () => page.waitForTimeout(3000));
 
     // 1. Typing.
-    const search = page.getByRole('searchbox', { name: 'Search products' });
+    const search = page.getByRole('combobox', { name: 'Search products' });
     await page.evaluate(() => (window.__perf.keyToFrame = []));
     const typingLongTasksFrom = await page.evaluate(() => performance.now());
     for (const query of ['running shoes', 'kitab', 'smart watch', 'cotton']) {
@@ -150,7 +150,7 @@ try {
     results.push({
       cpuThrottling: `${rate}x`,
       idleBaseline: { frameIntervalMs: stats(idle.frames), framesOver25ms: idle.frames.filter((f) => f > 25).length, longTasks: idle.longTasks.length },
-      typing: { keystrokeToNextFrameMs: stats(typing.keyToFrame), longTasks: { count: typing.longTasks.length, ...stats(typing.longTasks) } },
+      typing: { firstKeystrokeMs: typing.keyToFrame[0], keystrokeToNextFrameMs: stats(typing.keyToFrame), longTasks: { count: typing.longTasks.length, ...stats(typing.longTasks) } },
       scroll: {
         distancePx: scrolledTo,
         frameIntervalMs: stats(scroll.frames),
