@@ -85,48 +85,65 @@ the brief's eight fields, and the mock API returns exactly that shape.
 | Total match count | Heading "N results for “q”" in the results bar; the live region says "N products found" | `ResultSummary.tsx` | interaction and e2e tests |
 | "Clear all filters" | Shown in the results bar once a search or filter is applied (and in the empty state). Resets query, filters and sort, keeps foreign URL params, then focuses the results heading | `CatalogPage.tsx`, `ResultSummary.tsx`, `EmptyState.tsx` | interaction tests, e2e journey |
 | Filters, query and sort in the URL; reload or shared link restores the view | URL is the only filter store; total parser, canonical serializer | `src/url/*` | `filters-url.test.ts`, e2e `history.spec.ts` (reload, Back/Forward, no history flooding) |
-| Loading skeletons | Shimmer skeletons with the exact grid/list card dimensions, `aria-busy` | `LoadingState.tsx` | dimensions shared with the card constants; reviewed visually in an earlier round, not re-captured this round |
+| Loading skeletons | Shimmer skeletons with the exact grid/list card dimensions, `aria-busy` | `LoadingState.tsx` | dimensions shared with the card constants |
 | Helpful empty state | Only after a successful load with zero matches; illustration, tips, Clear all | `EmptyState.tsx` | interaction tests, e2e |
 | Clean error state with Retry | Status message, Retry focused, `aria-disabled` while retrying, filters kept | `ErrorState.tsx`, `useProducts.ts` | interaction tests, e2e `states.spec.ts` |
-| Keyboard navigable (Tab, Enter, Space) | Native controls only; filter checkboxes toggle with Space and with Enter; skip links; drawer focus trap; focus moves to page headings on navigation | `src/components/ui`, features | interaction tests, e2e keyboard-only journey and checkout |
+| Keyboard navigable (Tab, Enter, Space) | Native controls only; filter checkboxes toggle with Space and with Enter; skip links; drawer focus trap; focus moves to page headings on navigation | `src/components/ui`, features | interaction tests, e2e keyboard-only journey |
 | Semantic HTML and label associations | Landmarks, `form role=search`, `fieldset`/`legend`, visible `label` for every field | `src/components/ui/*` | axe in jsdom and in real Chrome |
 | aria-live announcement of result count | One app-wide polite region, about 500 ms after results settle; also cart changes and search corrections | `useAnnouncer.ts`, `AppProviders.tsx` | interaction tests, e2e |
 | No lag typing or rendering large lists; justified strategy; no redundant re-renders | Row virtualisation, deferred search, memoised cards, cheap per-card cart subscription | `ProductGrid.tsx`, `ProductCard.tsx` | `npm run bench`, `npm run perf`, e2e DOM-count test |
-| Client-side routing on S3 + CloudFront with fallback to `/index.html` | CloudFront Function rewrites extension-less paths (`/product/p-00042`, `/cart`, `/checkout`) | `infra/cloudfront/spa-rewrite.js`, `src/app/router.tsx` | e2e `cloudfront.spec.ts` (runs the function in a VM), e2e deep-link reloads |
+| Client-side routing on S3 + CloudFront with fallback to `/index.html` | CloudFront Function rewrites extension-less paths (any unknown path, e.g. `/ghhghg`, reaches the app and shows Page not found; `/?q=shoes&page=2` reloads in place) | `infra/cloudfront/spa-rewrite.js`, `src/app/router.tsx` | e2e `cloudfront.spec.ts` (runs the function in a VM), e2e deep-link reloads |
 | No hardcoded secrets; `VITE_*` config | One module reads `import.meta.env` and validates it | `src/config/env.ts`, `.env.example` | `env.test.ts` |
 | Vitest + RTL tests: core filter/sort logic and a user flow | 527 tests in 31 files | `src/**/*.test.ts(x)` | `npm test` |
 | README with setup, architecture, performance, CloudFront notes, improvements | This file | `README.md` | n/a |
 
 ### Add-ons beyond the brief
 
-The core catalog (search, filters, sort, URL sync, states, accessibility) works with both
-feature flags off; the core interaction tests run with both flags off.
+Everything in this table is visible in the default build and the live demo.
 
-| Add-on | Why it was added | How to turn it off or remove it |
+| Add-on | Why it was added | Where it lives |
 |---|---|---|
-| Product page `/product/:id` (lazy chunk) | Clicking a product should show it: large illustration, details, Add to cart, Buy now, "More from this brand" / "More in <category>" | **Off by default**; `VITE_FEATURE_PRODUCT_PAGE=true` turns it on. Off, the app is the single catalog page: card titles are not links and `/product/:id` is an unknown path (404). Code: `src/features/product/`. |
-| Cart (`CartStore`, localStorage, `/cart`) | Real add / change quantity / remove / clear, totals in INR, header badge, cross-tab sync | **Off by default**; `VITE_FEATURE_CART=true` turns it on. Off, there is no header cart link, no card buttons, no purchase panel, and `/cart` and `/checkout` are unknown paths (404). Code: `src/cart/`, `src/features/cart/`. |
-| Buy now and demo checkout `/checkout` | Completes the shopping flow from product to order confirmation. No payment step; delivery details are validated in the browser only and never stored or sent | Part of the cart feature (`VITE_FEATURE_CART`). |
-| Generated descriptions, highlights, review counts | Used only on the optional product page; catalog cards show the `Product` fields only. Mock content derived from the product, layered on top of the unchanged eight-field `Product` (see [Generated content](#generated-display-content)) | `src/data/productContent.ts` behind `ProductContentProvider`; swap for a provider that reads real API fields. |
-| Conversational search: stop words, unknown-word and typo fallback | "ek smart tv chahie" and "runing shoez" should find products; the strict match always wins | `src/search/stopWords.ts`, `src/search/fuzzy.ts`, `InMemorySearchEngine.ts`. Empty the stop-word list / skip `relax()` to turn off. |
-| Mixed-language aliases (joote, जूते, kitab, किताब, tv/television, earphones...) | Mixed-language shoppers type these terms | `src/search/aliases.ts`; empty `RAW_ALIASES`. |
-| React Router | URL state with history, routes for product/cart/checkout and the 404 | `src/url/useFilterState.ts`, `src/app/*`. |
-| TanStack Virtual | A few dozen cards in the DOM for any result count | `ProductGrid.tsx`. |
-| Smart search (rule-based phrase interpreter) | Turns "shoes under 5000 in stock" into filters on click | Off by default (`VITE_FEATURE_SMART_SEARCH`); `src/smart-search/`, `SmartSearchSuggestion.tsx`. |
-| Category facet counts, active filter chips | Quicker refinement and undo | Stop passing `facetCounts`; delete `<ActiveFilterChips>`. |
-| On-page mock controls | Trigger the simulated 500 without editing the URL | Off by default (`VITE_ENABLE_MOCK_CONTROLS`). |
-| `HttpProductService` | Seam for a real API (`VITE_API_BASE_URL`) | Unused unless the variable is set. |
-| Search suggestions and recent searches | Completes what is being typed with phrases from the catalog ("sma" offers smart watch, smart tv, smartphone) and offers the last five searches again. Typing still filters instantly; nothing is selected unless picked | `src/search/suggest.ts`, `src/search/recentSearches.ts`, `useSearchSuggestions.ts`; omit the `suggestions` prop on `<SearchBox>`. |
-| Share button (catalog, product page, cart) and shared cart links | The brief only needs the URL to be shareable, which it is; the button adds copy link, WhatsApp, email and Teams, and `/cart?items=` lets a cart be shared although carts live in storage | **Off by default**; `VITE_FEATURE_SHARE=true` turns it on. Off, the address bar is the share mechanism, as the brief asks. Code: `ShareButton.tsx`, `shareLink.ts`, `src/cart/sharedCart.ts`. |
-| Link-preview tags and image (`VITE_SITE_URL`) | A shared link shows a site card in chat apps once deployed | Tags in `index.html`, `public/og-image.png`, `siteUrl` plugin in `vite.config.ts`. |
-| Per-product link previews (`npm run build:previews`) | A shared product link shows that product's name, price, rating and stock, not the site card | `scripts/product-previews.mjs` writes one HTML file per product; the CloudFront function serves it. Optional: the app works the same without it. |
-| Bundled font (Inter) and the AllinONE identity in MLI colours | Brand colours as discussed with MLI; self-hosted font, no CDN | Colours are tokens in `src/index.css`; remove the font import in `main.tsx` and the system stack takes over. |
-| 29 bundled product illustrations | Every item type shows a picture of that kind of item | `src/assets/thumbnails/`, `src/data/thumbnails.ts`. |
-| Playwright e2e suite (dev only) | Verifies in real Chrome what jsdom cannot: layout, scrolling, Back/Forward, focus rings, contrast via axe | `e2e/`, `playwright.config.ts`, `npm run e2e`. Not in CI (Chrome on CI runners not verified from here). |
-| Perf and screenshot scripts (dev only) | Real throttled-Chrome numbers and reproducible docs screenshots | `scripts/perf.mjs`, `scripts/screenshots.mjs`. |
-| vitest-axe, axe-core | Accessibility scans in jsdom and in real Chrome | Dev dependencies. |
-| ESLint with import-boundary rules | Hook mistakes, a11y regressions, layer dependencies | `eslint.config.js`. |
-| `infra/cloudfront/`, CI workflow, bench script | Deployment notes made concrete; checks on push; numbers for this file | Delete the files. |
+| Conversational search: stop words, unknown-word and typo fallback | "ek smart tv chahie" and "runing shoez" should find products; the strict match always wins, and any correction is shown above the results | `src/search/stopWords.ts`, `src/search/fuzzy.ts`, `InMemorySearchEngine.ts` |
+| Mixed-language aliases (joote, जूते, kitab, किताब, tv/television, earphones...) | Mixed-language shoppers type these terms | `src/search/aliases.ts` |
+| Search suggestions and recent searches | From the first letter, completes with phrases and brands from the catalog and offers the last five searches. Typing still filters instantly; nothing is selected unless picked | `src/search/suggest.ts`, `src/search/recentSearches.ts`, `useSearchSuggestions.ts` |
+| Catalog brands in the empty state | The brands are invented, so a real one ("samsung") finds nothing; ten catalog brands (two per category) are offered as one-click searches | `sampleBrands.ts`, `EmptyState.tsx` |
+| Pagination (60 per page, `page` in the URL) | A position in 5,000 results is easy to share and return to; rows within a page are still virtualised | `src/domain/pagination.ts`, `components/ui/Pagination.tsx` |
+| Add to cart and Buy now on every card | Shopping actions on the catalog. They add to a cart kept in this browser and the card shows "1 in cart"; there is no cart page in the default build, so Buy now says checkout is not part of the demo | `CardActions.tsx`, `src/cart/`; `VITE_FEATURE_BUY_BUTTONS=false` hides them |
+| Category facet counts, active filter chips | Quicker refinement and undo | `CategoryFilter.tsx`, `ActiveFilterChips.tsx` |
+| Logo as a home link | One click back to all products: clears search, filters and page | `CatalogPage.tsx` |
+| MLI colours and the AllinONE identity, bundled font (Inter) | Brand colours as discussed with MLI; self-hosted font, no CDN | Tokens in `src/index.css`, `Wordmark.tsx` |
+| 29 bundled product illustrations | Every item type shows a picture of that kind of item | `src/assets/thumbnails/`, `src/data/thumbnails.ts` |
+| Link-preview tags and image (`VITE_SITE_URL`) | A shared link shows a card with the site name in chat apps | Tags in `index.html`, `public/og-image.png`, `siteUrl` plugin in `vite.config.ts` |
+| React Router | URL state with Back/Forward history, and the 404 page | `src/url/useFilterState.ts`, `src/app/*` |
+| TanStack Virtual | A few dozen cards in the DOM at any time | `ProductGrid.tsx` |
+
+### Built but switched off by default
+
+These are in the code and covered by tests (72 of the real-Chrome tests run on a build with
+them switched on), but the default build and the live demo leave them out, so the app is the
+single catalog page the brief describes. **None of them appears in the UI unless its
+build-time variable is set**; a path such as `/cart` or `/product/p-00001` shows "Page not
+found". The code stays because each is a likely next step, and one variable brings it back.
+
+| Feature | Turn on with | What then appears |
+|---|---|---|
+| Product detail page | `VITE_FEATURE_PRODUCT_PAGE=true` | Card titles link to `/product/:id`: large illustration, generated description and highlights, quantity, related products |
+| Cart page and demo checkout | `VITE_FEATURE_CART=true` | Header cart link with count, `/cart` (change quantity, remove, totals in INR, shared cart links) and `/checkout` (validated delivery form; no payment, nothing stored or sent); Buy now opens checkout |
+| Share button | `VITE_FEATURE_SHARE=true` | Copy link, WhatsApp, email and Teams on the catalog, product page and cart. Without it, the address bar is the share mechanism, as the brief asks |
+| Smart search | `VITE_FEATURE_SMART_SEARCH=true` | "shoes under 5000 in stock" offered as filters |
+| Simulate API failure button | `VITE_ENABLE_MOCK_CONTROLS=true` | A button that makes the next load fail. `?mockFail=1` in the URL does the same on any build |
+| Real API | `VITE_API_BASE_URL=https://...` | Products from `${VITE_API_BASE_URL}/products` (`HttpProductService`, with timeout and retries) instead of the mock |
+| Per-product link previews | `npm run build:previews` after the build | One HTML file per product, so a shared product link shows its name and price; only useful with the product page on |
+
+### Developer tooling (not part of the app)
+
+| Tool | Purpose |
+|---|---|
+| Playwright e2e suite | Real Chrome checks that jsdom cannot do: layout, scrolling, Back/Forward, focus rings, contrast via axe. Builds both the default and the all-features version. Not in CI (Chrome on CI runners not verified from here) |
+| vitest-axe, axe-core | Accessibility scans in jsdom and in real Chrome |
+| ESLint with import-boundary rules | Hook mistakes, a11y regressions, layer dependencies (`eslint.config.js`) |
+| Perf, screenshot and bench scripts | Throttled-Chrome numbers, reproducible screenshots, Node timings (`scripts/`) |
+| `infra/cloudfront/`, CI workflow | The CloudFront function and deploy script; checks on push |
 
 ## Features
 
@@ -180,7 +197,22 @@ every keystroke exactly as before: a suggestion is only applied when it is picke
 - The same suggestions appear in the header search on the product, cart and checkout pages,
   where picking one opens the catalog with that query.
 
-### Product page, cart, Buy now, checkout
+![Search suggestions on a phone after typing "sm"](docs/screenshots/suggestions-390.png)
+
+### Add to cart and Buy now
+
+Every card has Add to cart (burgundy outline) and Buy now (solid burgundy). They add the
+product to a cart kept in this browser's storage, announce it ("Added Olive Running Shoes to
+cart") and show "1 in cart" on the card. The default build has no cart page, so Buy now adds
+the product and announces that checkout is not part of the demo, without leaving the page.
+For unavailable products both buttons are disabled, with the reason in text ("Currently
+unavailable", linked with `aria-describedby`).
+
+### Product page, cart and checkout (off by default)
+
+Not in the default build or the live demo; see
+[Built but switched off by default](#built-but-switched-off-by-default). With
+`VITE_FEATURE_PRODUCT_PAGE=true` and `VITE_FEATURE_CART=true`:
 
 - **Product page** `/product/:id` (lazy-loaded): large illustration, brand, title, category,
   star rating with review count, price, stock, generated description and highlights, quantity
@@ -206,8 +238,6 @@ every keystroke exactly as before: a suggestion is only applied when it is picke
   order is placed; the e2e test checks localStorage and sessionStorage afterwards. Placing the
   order clears the cart and shows a confirmation with a random reference. An empty cart on
   `/checkout` goes to the cart's empty state.
-- **Unavailable products**: Add to cart and Buy now are disabled, with the reason in text
-  ("Currently unavailable", linked with `aria-describedby`).
 - **Phone list cards** carry both buttons too, on their own row under the price; the stock
   line sits beside the price with the short label "Out of stock". Checked at 390, 360 and
   320 px: content fits the fixed card height and nothing scrolls sideways.
@@ -215,20 +245,20 @@ every keystroke exactly as before: a suggestion is only applied when it is picke
 ### Sharing a view
 
 The brief asks that sharing the URL restores the exact filtered view. That is met by the URL
-itself: the address bar always holds the full filter state, so copying it is enough. As an
-add-on, a **Share** button in the results bar makes that explicit: on touch devices it opens
+itself: the address bar always holds the full filter state, so copying it is enough.
+
+Off by default (`VITE_FEATURE_SHARE=true` turns it on), a **Share** button in the results bar
+makes that explicit: on touch devices it opens
 the system share sheet, elsewhere it copies the link and confirms with "Copied" and a
 live-region message. It reads the address bar when pressed, so it shares exactly what a
 reload would restore. The share sheet and clipboard APIs need HTTPS; on plain HTTP a legacy
 copy is tried, and if that fails the message says to copy from the address bar.
 
-![Search suggestions on a phone after typing "sm"](docs/screenshots/suggestions-390.png)
-
-With `VITE_FEATURE_PRODUCT_PAGE=true`, the product page:
+With `VITE_FEATURE_PRODUCT_PAGE=true`, the product page (not in the default build):
 
 ![Product page at 1440 px (optional feature)](docs/screenshots/optional/product-1440.png)
 
-### Generated display content
+### Generated display content (product page only, off by default)
 
 Descriptions, highlights and review counts are **generated mock content**, not part of the
 brief's data. `Product` stays exactly the eight fields and the mock API returns exactly that.
