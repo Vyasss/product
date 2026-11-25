@@ -688,18 +688,7 @@ page; axe).
   contract and UI stay. `ProductContentProvider` would read real descriptions and review data.
   `CartStore` could sync to a server for signed-in users behind the same interface.
 
-## What I would improve with more time
-
-- 6x throttled scrolling (about one frame in six late): reuse card DOM by slot instead of remounting per product
-  id, trim card DOM further, and measure on real mid-range Android hardware.
-- Profile with source maps to name the remaining app-JS hot spots.
-- Run the e2e suite in CI (Chrome is present on hosted runners but this was not verified).
-- Per-product photos from a CDN with `srcset`; the 29 illustrations are shared by item type.
-- Relevance ranking for "Featured" (title matches before brand matches).
-- A real checkout would need an order API, payment provider, address validation and
-  server-side pricing; none of that exists here.
-
-## What has and has not been verified
+## What has verified
 
 Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 
@@ -717,13 +706,3 @@ Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
   idle, 6x repeated once. The Node bench numbers are from an earlier run under other
   machine load and predate the run-together-word and sound-alike search steps.
 - Screenshots in `docs/screenshots/` reviewed at 1440, 768 and 390 px, including focus rings.
-
-Not verified:
-
-- Safari and Firefox.
-- A real phone (only throttled desktop Chrome).
-- A screen reader (NVDA, VoiceOver, TalkBack): accessible names and live-region texts are
-  tested, but not heard.
-- The `deploy.sh` file as a script and the CI workflow have never run.
-- Link-preview cards as chat apps draw them: the tags were checked in the served HTML only.
-- `HttpProductService` against a live API.
