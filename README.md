@@ -676,7 +676,7 @@ Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 - `npm run typecheck`, `npm run lint` exit 0; `npm test` 527 passed in 31 files;
   `npm run e2e` 87 passed in real Chrome, including axe on every main page.
 - The S3 + CloudFront deployment: see the checks listed under "Deploying to S3 + CloudFront".
-- Build (default flags): main JS 329.33 kB (106.28 kB gzip), CSS 38.01 kB (8.48 kB gzip).
+- Build (default flags): main JS 329.42 kB (106.32 kB gzip), CSS 38.01 kB (8.48 kB gzip).
   Lazy chunks, loaded only when their optional feature is on: StorePage 62.88 kB (22.48 kB
   gzip, shared by the product, cart and checkout pages), CartPage 7.12 kB, ProductPage 6.63 kB,
   CheckoutPage 5.53 kB, QuantityStepper 1.41 kB, ConfirmationPage 1.26 kB. Font: Inter
