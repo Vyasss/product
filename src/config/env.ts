@@ -7,7 +7,7 @@ export interface AppConfig {
   apiBaseUrl: string | null;
   /** Mock only: probability in [0, 1] that a request fails with a simulated 500. */
   mockFailRate: number;
-  /** Show the on-page control that simulates a failed API response (mock service only; on by default). */
+  /** Show the on-page control that simulates a failed API response (mock service only; off by default). */
   enableMockControls: boolean;
   /** Show smart-search suggestions. */
   smartSearch: boolean;
@@ -65,7 +65,7 @@ export function parseConfig(env: RawEnv): AppConfig {
   return {
     apiBaseUrl: readBaseUrl(env, 'VITE_API_BASE_URL'),
     mockFailRate: readRate(env, 'VITE_MOCK_FAIL_RATE'),
-    enableMockControls: readFlagDefaultOn(env, 'VITE_ENABLE_MOCK_CONTROLS'),
+    enableMockControls: readFlag(env, 'VITE_ENABLE_MOCK_CONTROLS'),
     smartSearch: readFlag(env, 'VITE_FEATURE_SMART_SEARCH'),
     cart: readFlag(env, 'VITE_FEATURE_CART'),
     share: readFlag(env, 'VITE_FEATURE_SHARE'),

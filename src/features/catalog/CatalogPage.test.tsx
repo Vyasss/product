@@ -153,6 +153,8 @@ describe('CatalogPage (core, add-on flags off)', () => {
     await user.tab();
     expect(screen.getByRole('link', { name: 'Skip to results' })).toHaveFocus();
     await user.tab();
+    expect(screen.getByRole('link', { name: 'AllinONE product catalog' })).toHaveFocus();
+    await user.tab();
     expect(screen.getByRole('combobox', { name: 'Search products' })).toHaveFocus();
     await user.keyboard('rug{Enter}');
     await waitFor(() => expect(currentSearch()).toBe('?q=rug'));

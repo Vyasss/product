@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router';
 import { SiteFooter } from '../../components/layout/SiteFooter';
 import { SiteHeader } from '../../components/layout/SiteHeader';
 import { Wordmark } from '../../components/layout/Wordmark';
@@ -18,6 +19,7 @@ import { useAnnounce } from '../../hooks/useAnnounce';
 import { useCatalogData } from '../../hooks/useCatalogData';
 import { useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
 import { useScrollMemory } from '../../hooks/useScrollMemory';
+import { useSearchEngine } from '../../hooks/useSearchEngine';
 import { useServices } from '../../hooks/useServices';
 import { CartButton } from '../cart/CartButton';
 import { serializeFilters } from '../../url/serializeFilters';
@@ -39,7 +41,7 @@ import { useSearchText } from './useSearchText';
 const EMPTY_PARAMS = new URLSearchParams();
 
 export function CatalogPage() {
-  const { createSearchEngine, queryInterpreter, mockControls, features } = useServices();
+  const { queryInterpreter, mockControls, features } = useServices();
   const { cart } = features;
   const { products: productsState } = useCatalogData();
   const { retry } = productsState;
@@ -54,7 +56,7 @@ export function CatalogPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const products = productsState.status === 'success' ? productsState.products : null;
-  const engine = useMemo(() => (products ? createSearchEngine(products) : null), [products, createSearchEngine]);
+  const engine = useSearchEngine(products);
   // Every brand, most products first: offered when a search finds nothing (the brands are invented).
   const brands = useMemo(() => sampleBrands(products ?? []), [products]);
 
@@ -160,6 +162,14 @@ export function CatalogPage() {
     searchInputRef.current?.focus();
   }, [onTextChange, flushSearch]);
 
+  // The logo goes home: every filter, the search and the page are cleared (the link drops the
+  // query string) and the window returns to the top.
+  const showAllProducts = useCallback(() => {
+    resetSearchText('');
+    setFiltersOpen(false);
+    window.scrollTo({ top: 0 });
+  }, [resetSearchText]);
+
   const openFilters = useCallback(() => setFiltersOpen(true), []);
   const closeFilters = useCallback(() => setFiltersOpen(false), []);
 
@@ -189,10 +199,12 @@ export function CatalogPage() {
       <SiteHeader
         brand={
           <h1>
-            <span className="sr-only">AllinONE product catalog</span>
-            <span aria-hidden="true">
-              <Wordmark markOnlyOnPhones />
-            </span>
+            <Link to="/" onClick={showAllProducts} title="Show all products" className="block rounded-control">
+              <span className="sr-only">AllinONE product catalog</span>
+              <span aria-hidden="true">
+                <Wordmark markOnlyOnPhones />
+              </span>
+            </Link>
           </h1>
         }
         actions={cart ? <CartButton /> : undefined}

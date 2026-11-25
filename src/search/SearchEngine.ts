@@ -32,6 +32,11 @@ export interface SearchEngine {
   search(filters: FilterState): SearchResult;
   /** Completions for partly typed text, best first. Each one finds products when searched. */
   suggest(text: string, limit?: number): readonly SuggestionEntry[];
+  /**
+   * Build whatever `suggest` needs ahead of time. The UI calls it when the browser is idle,
+   * so the first keystroke does not pay for it. Optional: `suggest` must work without it.
+   */
+  prepareSuggestions?(): unknown;
 }
 
 export type SearchEngineFactory = (products: readonly Product[]) => SearchEngine;

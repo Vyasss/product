@@ -12,12 +12,10 @@ see [Configuration](#configuration).
 
 **Live demo:** https://d3t07ggz1uw32y.cloudfront.net (S3 + CloudFront, mock data).
 
-![Desktop catalog at 1440 px: sticky header with search and cart, filter sidebar, results bar with chips, product grid](docs/screenshots/catalog-1440.png)
+![Desktop catalog at 1440 px in the MLI colours: navy header with search, filter sidebar, results bar with chips, product grid with Add to cart and Buy now](docs/screenshots/catalog-1440.png)
 
-The screenshots in this README predate the MLI colours and were taken with the optional
-features on. The default build (and the live demo) uses the MLI palette below and is one page:
-no cart link, Share button or product links, and cards show the eight `Product` fields (no
-description or review count) with Add to cart and Buy now.
+The screenshots show the default build, as on the live demo. Pages behind optional features
+are in [`docs/screenshots/optional/`](docs/screenshots/optional).
 
 - [Quick start](#quick-start)
 - [Brief requirements and add-ons](#brief-requirements-and-add-ons)
@@ -57,7 +55,7 @@ npm run dev        # http://localhost:5173
 | `npm run bench` | Node timings for generate / index / search / sort |
 | `npm run e2e` | Playwright end-to-end suite in local Chrome (builds and serves on port 4190) |
 | `npm run perf` | Throttled-Chrome measurements at 1x, 4x, 6x CPU (run `npm run build` first) |
-| `npm run screenshots` | Regenerates `docs/screenshots/` (run `npm run build` first) |
+| `npm run screenshots` | Regenerates `docs/screenshots/` (run `npm run build` first; builds the optional pages itself) |
 
 To see the error state: open `/?mockFail=1` (the first load fails, Retry recovers), set
 `VITE_MOCK_FAIL_RATE=0.3`, or enable the on-page mock controls (see [Configuration](#configuration)).
@@ -96,7 +94,7 @@ the brief's eight fields, and the mock API returns exactly that shape.
 | No lag typing or rendering large lists; justified strategy; no redundant re-renders | Row virtualisation, deferred search, memoised cards, cheap per-card cart subscription | `ProductGrid.tsx`, `ProductCard.tsx` | `npm run bench`, `npm run perf`, e2e DOM-count test |
 | Client-side routing on S3 + CloudFront with fallback to `/index.html` | CloudFront Function rewrites extension-less paths (`/product/p-00042`, `/cart`, `/checkout`) | `infra/cloudfront/spa-rewrite.js`, `src/app/router.tsx` | e2e `cloudfront.spec.ts` (runs the function in a VM), e2e deep-link reloads |
 | No hardcoded secrets; `VITE_*` config | One module reads `import.meta.env` and validates it | `src/config/env.ts`, `.env.example` | `env.test.ts` |
-| Vitest + RTL tests: core filter/sort logic and a user flow | 521 tests in 30 files | `src/**/*.test.ts(x)` | `npm test` |
+| Vitest + RTL tests: core filter/sort logic and a user flow | 522 tests in 30 files | `src/**/*.test.ts(x)` | `npm test` |
 | README with setup, architecture, performance, CloudFront notes, improvements | This file | `README.md` | n/a |
 
 ### Add-ons beyond the brief
@@ -224,7 +222,11 @@ live-region message. It reads the address bar when pressed, so it shares exactly
 reload would restore. The share sheet and clipboard APIs need HTTPS; on plain HTTP a legacy
 copy is tried, and if that fails the message says to copy from the address bar.
 
-![Product page at 1440 px](docs/screenshots/product-1440.png)
+![Search suggestions on a phone after typing "sm"](docs/screenshots/suggestions-390.png)
+
+With `VITE_FEATURE_PRODUCT_PAGE=true`, the product page:
+
+![Product page at 1440 px (optional feature)](docs/screenshots/optional/product-1440.png)
 
 ### Generated display content
 
@@ -270,7 +272,7 @@ in the font stack where it is installed. Nothing is fetched from a CDN.
 
 | Area | What it looks like |
 |---|---|
-| Header | Sticky navy bar: wordmark (bag mark only on phones), visible "Search products" label, search field with icon and Clear button (cart link with count badge when the cart is on). One compact row on phones (72 px). |
+| Header | Sticky navy bar: wordmark (bag mark only on phones; on the catalog it is a link that clears search, filters and page and returns to the top), visible "Search products" label, search field with icon and Clear button (cart link with count badge when the cart is on). One compact row on phones (72 px). |
 | Results bar | "N results for “q”", Filters button (below 1024 px), Sort select, relaxation note, chips and Clear all. Sticky under the header from 768 px up; on phones it scrolls away so the pinned area stays at 72 px. |
 | Filter sidebar | Card with Category, Price and Availability sections and right-aligned facet counts; stays in view. Below 1024 px the same panel opens in a drawer with a sticky "Show N results" button. |
 | Product card | The eight `Product` fields: illustration (`thumbnailUrl`) with category badge, brand, two-line title, star rating with its value, price with a raised ₹, stock line ("1 in cart" after adding). Then Add to cart (burgundy outline) and Buy now (solid burgundy). Without the cart page, Buy now adds the product and announces that checkout is not part of the demo. With the product page on, the title is a link (with hover cues on pointer devices). Fixed height: 24.125 rem in the grid and 13.25 rem in the phone list layout (21 and 9.375 rem with `VITE_FEATURE_BUY_BUTTONS=false`), so the last line sits on the bottom padding (checked in Chrome at 1440, 768, 390 and 320 px). All text clamps. |
@@ -282,10 +284,11 @@ in the font stack where it is installed. Nothing is fetched from a CDN.
 
 Screenshots in [`docs/screenshots/`](docs/screenshots) (headless Chrome against the production
 build, regenerated with `npm run screenshots`): catalog at 1440, 768 and 390 px, typo
-correction, empty, error, phone filter drawer, product page at 1440 and 390 px, cart, checkout
-with validation errors, confirmation, 404, and `focus/` with the focus ring on the search field
-and cart link (dark header), the Clear button inside the field, a checkbox, the sort select, a
-ghost button, a primary button and a product card (light surfaces).
+correction, search suggestions, pagination, empty, error, phone filter drawer, 404, and
+`focus/` with the focus ring on the search field (navy header), the Clear button inside the
+field, a checkbox, the sort select, a ghost button, Add to cart, Buy now and Retry (light
+surfaces). `optional/` holds the product page at 1440 and 390 px, cart, checkout with
+validation errors and confirmation, captured from a second build with those features on.
 
 ### Design tokens
 
@@ -562,10 +565,10 @@ public; there are no secrets. `VITE_API_BASE_URL` (real API), `VITE_MOCK_FAIL_RA
 | `VITE_FEATURE_SHARE` | off | Share buttons on the catalog, product page and cart (copy link, WhatsApp, email, Teams) |
 | `VITE_FEATURE_SMART_SEARCH` | off | "Shoes under 5000 in stock" offered as filters |
 | `VITE_FEATURE_BUY_BUTTONS` | **on** | Add to cart and Buy now on every card (`false` hides them) |
-| `VITE_ENABLE_MOCK_CONTROLS` | **on** | A "Simulate API failure" button under the results bar: the next load fails with a simulated 500, the error state shows, Retry recovers (`false` hides it) |
+| `VITE_ENABLE_MOCK_CONTROLS` | off | A "Simulate API failure" button under the results bar: the next load fails with a simulated 500, the error state shows, Retry recovers |
 
-Without the button, `?mockFail=1` in the URL does the same: the first load fails with a
-simulated 500 (`?mockFail=2` fails two loads).
+On any build, `?mockFail=1` in the URL does the same without a button: the first load fails
+with a simulated 500 and the error state offers Retry (`?mockFail=2` fails two loads).
 
 Flags reach the UI through `Services.features` (`useFeatures()`), so a component never reads
 the environment, and tests choose features per render. A feature that is off is not rendered at
@@ -610,7 +613,7 @@ script file itself has not been run.
 
 ## Tests
 
-`npm test`: **521 tests in 30 files** (Vitest, jsdom, React Testing Library, user-event):
+`npm test`: **522 tests in 30 files** (Vitest, jsdom, React Testing Library, user-event):
 generator (determinism, checksum, price spread, illustrations for every item type), mock
 service, engine filters and sorts, conversational search (stop words, fallback, typo table
 including brand typos, short-token and correct-query cases), URL codec, smart-search phrases,
@@ -620,13 +623,15 @@ cart summary, checkout validation, related products, star rating, price formatti
 helpers (columns, layout, pinned focused row), catalog interactions (flags off), cart/product/
 checkout interactions, the default build without cart and share, and an axe scan.
 
-`npm run e2e`: **85 tests in real Chrome** (about 1.6 minutes), against two production builds
+`npm run e2e`: **87 tests in real Chrome** (about 1.9 minutes), against two production builds
 served side by side from `.e2e/` (so `dist/` is never overwritten): 72 with the optional
-features on, and 13 on the default build (`default-build.spec.ts`: cards show the product
+features on, and 15 on the default build (`default-build.spec.ts`: cards show the product
 fields and the buy buttons and fit at 1440, 768, 390 and 320 px; no product links, cart link
-or Share; `/product/:id`, `/cart` and `/checkout` are 404; the Simulate API failure button and
-`?mockFail=1` show the error state with a focused Retry that recovers; Buy now adds and stays
-on the page; an unknown brand offers the catalog brands; axe).
+or Share; `/product/:id`, `/cart`, `/checkout` and any unknown address show Page not found, whose Retry
+opens the catalog; no Simulate API failure button; `?mockFail=1` shows the error state with a
+focused Retry that recovers; Buy now adds and stays
+on the page; an unknown brand offers the catalog brands; the logo clears search, filters and
+page; axe).
 - **Pages:** Next page by keyboard moves focus to the results heading; reload and Back keep the
   page in step with the URL; a shared `?page=3` opens page 3; a filter change returns to page 1;
   compact controls at 320 px.
@@ -667,10 +672,10 @@ on the page; an unknown brand offers the catalog brands; axe).
 
 Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 
-- `npm run typecheck`, `npm run lint` exit 0; `npm test` 521 passed in 30 files;
-  `npm run e2e` 85 passed in real Chrome, including axe on every main page.
+- `npm run typecheck`, `npm run lint` exit 0; `npm test` 522 passed in 30 files;
+  `npm run e2e` 87 passed in real Chrome, including axe on every main page.
 - The S3 + CloudFront deployment: see the checks listed under "Deploying to S3 + CloudFront".
-- Build (default flags): main JS 329.13 kB (106.25 kB gzip), CSS 38.01 kB (8.48 kB gzip).
+- Build (default flags): main JS 329.33 kB (106.28 kB gzip), CSS 38.01 kB (8.48 kB gzip).
   Lazy chunks, loaded only when their optional feature is on: StorePage 62.88 kB (22.48 kB
   gzip, shared by the product, cart and checkout pages), CartPage 7.12 kB, ProductPage 6.63 kB,
   CheckoutPage 5.53 kB, QuantityStepper 1.41 kB, ConfirmationPage 1.26 kB. Font: Inter

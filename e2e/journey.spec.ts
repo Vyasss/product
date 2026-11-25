@@ -10,6 +10,8 @@ test('full journey with the keyboard only: search, category, price, sort, clear 
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to results' })).toBeFocused();
   await page.keyboard.press('Tab');
+  await expect(page.getByRole('link', { name: 'AllinONE product catalog' })).toBeFocused();
+  await page.keyboard.press('Tab');
   const search = page.getByRole('combobox', { name: 'Search products' });
   await expect(search).toBeFocused();
 

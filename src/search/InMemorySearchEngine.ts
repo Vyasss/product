@@ -59,7 +59,7 @@ export class InMemorySearchEngine implements SearchEngine {
   /** Built once with the index; only read when a strict search finds nothing. */
   private readonly vocabulary: readonly VocabularyWord[];
   private readonly wordFrequency: ReadonlyMap<string, number>;
-  /** Built on first use: only needed once someone types in the search box. */
+  /** Built by `prepareSuggestions` (the UI calls it when idle) or, failing that, on first use. */
   private suggestionEntries: readonly SuggestionEntry[] | null = null;
 
   constructor(products: readonly Product[]) {
@@ -68,9 +68,13 @@ export class InMemorySearchEngine implements SearchEngine {
     this.wordFrequency = new Map(this.vocabulary.map(({ word, frequency }) => [word, frequency]));
   }
 
-  suggest(text: string, limit?: number): readonly SuggestionEntry[] {
+  prepareSuggestions(): readonly SuggestionEntry[] {
     this.suggestionEntries ??= buildSuggestionEntries(this.index.products);
-    return suggest(text, this.suggestionEntries, limit);
+    return this.suggestionEntries;
+  }
+
+  suggest(text: string, limit?: number): readonly SuggestionEntry[] {
+    return suggest(text, this.prepareSuggestions(), limit);
   }
 
   search(filters: FilterState): SearchResult {

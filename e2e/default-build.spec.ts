@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { expectSearch, runAxe, waitForCards } from './helpers';
 
-// The build as shipped: a single catalog page. Product page, cart page and share are off; the
-// buy buttons and the "Simulate API failure" button are on (see playwright.config.ts).
+// The build as shipped: a single catalog page. Product page, cart page, share and the
+// "Simulate API failure" button are off; the buy buttons are on (see playwright.config.ts).
 
 /**
  * Space between each card's last line and its bottom edge. Every card must keep its 12px
@@ -59,13 +59,17 @@ test('?mockFail=1: the simulated API failure shows the error state, and Retry re
   await waitForCards(page);
 });
 
-test('the Simulate API failure button shows the error state, and Retry recovers', async ({ page }) => {
+test('no Simulate API failure button in the default build', async ({ page }) => {
   await page.goto('/');
   await waitForCards(page);
-  await page.getByRole('button', { name: 'Simulate API failure' }).click();
-  const retry = page.getByRole('button', { name: 'Retry' });
-  await expect(retry).toBeFocused();
-  await retry.click();
+  await expect(page.getByRole('button', { name: 'Simulate API failure' })).toHaveCount(0);
+});
+
+test('an unknown address shows Page not found, and its Retry opens the catalog', async ({ page }) => {
+  await page.goto('/ghhghg');
+  await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
+  await page.getByRole('link', { name: 'Retry' }).click();
+  await expectSearch(page, '');
   await waitForCards(page);
 });
 
@@ -95,4 +99,14 @@ test('catalog has no accessibility violations', async ({ page }) => {
   await page.goto('/');
   await waitForCards(page);
   expect(await runAxe(page)).toEqual([]);
+});
+
+test('clicking the logo shows all products again, from any search, filter and page', async ({ page }) => {
+  await page.goto('/?q=shoes&category=Sports&inStock=true&page=2');
+  await waitForCards(page);
+  await page.getByRole('link', { name: 'AllinONE product catalog' }).click();
+  await expectSearch(page, '');
+  await expect(page.getByRole('combobox', { name: 'Search products' })).toHaveValue('');
+  await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('5,000 results');
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThan(200);
 });

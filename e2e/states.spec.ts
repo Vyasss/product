@@ -27,7 +27,7 @@ test('empty state offers Clear all', async ({ page }) => {
 test('unknown paths show the not-found page with a way back', async ({ page }) => {
   await page.goto('/no/such/page');
   await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
-  await page.getByRole('link', { name: 'Go to the catalog' }).click();
+  await page.getByRole('link', { name: 'Retry' }).click();
   await waitForCards(page);
 });
 

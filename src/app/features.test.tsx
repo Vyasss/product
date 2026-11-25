@@ -52,4 +52,13 @@ describe('the default build: a single catalog page', () => {
     expect(await screen.findByRole('heading', { level: 3, name: 'Cricket Bat Pro' })).toBeInTheDocument();
     await waitFor(() => expect(currentSearch()).toBe('?q=Arena%20Pro'));
   });
+
+  it('the logo shows all products again: search, filters and page are cleared', async () => {
+    const { user, currentSearch } = renderApp({ route: '/?q=shoes&category=Sports', services: defaultBuild() });
+    expect(await screen.findByRole('heading', { level: 3, name: 'Trail Running Shoes' })).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'AllinONE product catalog' }));
+    await waitFor(() => expect(currentSearch()).toBe(''));
+    expect(screen.getByRole('combobox', { name: 'Search products' })).toHaveValue('');
+    expect(await screen.findByRole('heading', { level: 3, name: 'Cotton T-Shirt' })).toBeInTheDocument();
+  });
 });

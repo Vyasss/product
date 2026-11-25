@@ -105,6 +105,22 @@ describe('suggestions through the engine', () => {
     const engine = createInMemorySearchEngine(FIXTURE_PRODUCTS);
     expect(engine.suggest('sho').map((entry) => entry.text)).toEqual(['shoes']);
   });
+
+  it('builds the suggestion data once, ahead of the first keystroke', () => {
+    const engine = createInMemorySearchEngine(FIXTURE_PRODUCTS);
+    const prepared = engine.prepareSuggestions?.();
+    expect(engine.prepareSuggestions?.()).toBe(prepared);
+    expect(engine.suggest('sho').map((entry) => entry.text)).toEqual(['shoes']);
+  });
+
+  it('normalises words in titles the same way as whole phrases', () => {
+    const accented = buildSuggestionEntries([
+      makeProduct({ id: 'a', title: 'Café  Crème Mugs,', brand: 'Élan' }),
+      makeProduct({ id: 'b', title: 'CAFÉ crème mugs', brand: 'Élan' }),
+    ]);
+    expect(accented.map((entry) => entry.key)).toEqual(expect.arrayContaining(['cafe creme mugs', 'elan']));
+    expect(accented.find((entry) => entry.key === 'cafe creme mugs')).toMatchObject({ count: 2, kind: 'product' });
+  });
 });
 
 describe('recent searches', () => {

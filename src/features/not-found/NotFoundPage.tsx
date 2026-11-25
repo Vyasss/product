@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Link } from 'react-router';
 import { buttonClassName } from '../../components/ui/Button';
+import { RefreshIcon } from '../../components/ui/icons';
 import { useDocumentTitle, useFocusOnNavigation } from '../../hooks/usePageMeta';
 import { StateMessage } from '../../components/ui/StateMessage';
 import { StorePage } from '../shell/StorePage';
@@ -20,7 +21,8 @@ function LostIllustration() {
 
 /**
  * Client-side 404. CloudFront serves index.html for extension-less paths, so unknown
- * routes reach the app and land here instead of a bare S3 error.
+ * routes reach the app and land here instead of a bare S3 error. Retry opens the catalog,
+ * the one page this app has.
  */
 export function NotFoundPage() {
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -37,7 +39,8 @@ export function NotFoundPage() {
           title="Page not found"
           action={
             <Link to="/" className={buttonClassName('primary')}>
-              Go to the catalog
+              <RefreshIcon className="size-4" />
+              Retry
             </Link>
           }
         >

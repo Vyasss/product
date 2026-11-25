@@ -29,35 +29,51 @@ const MIN_QUERY_LENGTH = 1;
  */
 export function buildSuggestionEntries(products: readonly Product[]): SuggestionEntry[] {
   const phrases = new Map<string, { text: string; count: number; kind: SuggestionEntry['kind'] }>();
-  const add = (text: string, kind: SuggestionEntry['kind']) => {
-    const key = normalize(text);
+  const add = (key: string, text: string, kind: SuggestionEntry['kind']) => {
     if (key === '') return;
     const existing = phrases.get(key);
     if (existing) existing.count += 1;
-    else phrases.set(key, { text: kind === 'brand' ? text : key, count: 1, kind });
+    else phrases.set(key, { text, count: 1, kind });
+  };
+
+  // Titles reuse a small vocabulary, so each distinct raw word (and brand) is normalised once
+  // and phrases are joined from normalised words. Normalising every phrase instead made this
+  // build ~5x slower, and it runs when someone starts typing.
+  const normalized = new Map<string, string>();
+  const normalizeOnce = (text: string) => {
+    let value = normalized.get(text);
+    if (value === undefined) {
+      value = normalize(text);
+      normalized.set(text, value);
+    }
+    return value;
   };
 
   for (const product of products) {
-    const words = product.title
-      .split(/\s+/)
-      .map((word) => word.replace(TRAILING_PUNCTUATION, ''))
-      .filter((word) => word !== '');
+    const words: string[] = [];
+    for (const raw of product.title.split(/\s+/)) {
+      const word = normalizeOnce(raw.replace(TRAILING_PUNCTUATION, ''));
+      if (word !== '') words.push(word);
+    }
     // A set, so a phrase repeated inside one title still counts that product once.
     const inTitle = new Set<string>();
     for (let start = 0; start < words.length; start++) {
+      let phrase = '';
       for (let size = 1; size <= MAX_PHRASE_WORDS && start + size <= words.length; size++) {
-        inTitle.add(words.slice(start, start + size).join(' '));
+        phrase = size === 1 ? (words[start] ?? '') : `${phrase} ${words[start + size - 1] ?? ''}`;
+        inTitle.add(phrase);
       }
     }
-    for (const phrase of inTitle) add(phrase, 'product');
-    add(product.brand, 'brand');
+    for (const phrase of inTitle) add(phrase, phrase, 'product');
+    add(normalizeOnce(product.brand), product.brand, 'brand');
   }
 
   // A shorter phrase that only ever appears inside one longer phrase adds nothing: "yoga"
   // occurs in exactly the products that "yoga mat" does, so offer the full phrase only.
   const fragments = new Set<string>();
   for (const [key, { count, kind }] of phrases) {
-    if (kind !== 'product') continue;
+    // Below the minimum, any fragment with the same count is dropped by that rule anyway.
+    if (kind !== 'product' || count < MIN_PHRASE_PRODUCTS) continue;
     const words = key.split(' ');
     for (let size = 1; size < words.length; size++) {
       for (let start = 0; start + size <= words.length; start++) {
