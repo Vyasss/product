@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { CloseIcon } from '../../components/ui/icons';
 import type { FilterPatch, FilterState } from '../../domain/filters';
+import { typesWithin } from '../../domain/productType';
 import { formatPrice } from '../shared/format';
 
 export interface ActiveFilterChipsProps {
@@ -18,11 +19,15 @@ function chipsFor(filters: FilterState): Chip[] {
   const chips: Chip[] = [];
   if (filters.q !== '') chips.push({ key: 'q', label: `“${filters.q}”`, patch: { q: '' } });
   for (const category of filters.categories) {
+    const categories = filters.categories.filter((c) => c !== category);
     chips.push({
       key: `category-${category}`,
       label: category,
-      patch: { categories: filters.categories.filter((c) => c !== category) },
+      patch: { categories, types: typesWithin(filters.types, categories) },
     });
+  }
+  for (const type of filters.types) {
+    chips.push({ key: `type-${type}`, label: type, patch: { types: filters.types.filter((t) => t !== type) } });
   }
   if (filters.minPrice !== null) {
     chips.push({ key: 'min', label: `From ${formatPrice(filters.minPrice)}`, patch: { minPrice: null } });

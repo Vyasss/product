@@ -9,7 +9,7 @@ export interface SuggestionEntry {
   readonly words: readonly string[];
   /** Number of products the phrase comes from; more common phrases rank higher. */
   readonly count: number;
-  readonly kind: 'product' | 'brand';
+  readonly kind: 'product' | 'brand' | 'category';
 }
 
 const MAX_PHRASE_WORDS = 3;
@@ -66,6 +66,7 @@ export function buildSuggestionEntries(products: readonly Product[]): Suggestion
     }
     for (const phrase of inTitle) add(phrase, phrase, 'product');
     add(normalizeOnce(product.brand), product.brand, 'brand');
+    add(normalizeOnce(product.category), product.category, 'category');
   }
 
   // A shorter phrase that only ever appears inside one longer phrase adds nothing: "yoga"

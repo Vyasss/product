@@ -94,7 +94,7 @@ the brief's eight fields, and the mock API returns exactly that shape.
 | No lag typing or rendering large lists; justified strategy; no redundant re-renders | Row virtualisation, deferred search, memoised cards, cheap per-card cart subscription | `ProductGrid.tsx`, `ProductCard.tsx` | `npm run bench`, `npm run perf`, e2e DOM-count test |
 | Client-side routing on S3 + CloudFront with fallback to `/index.html` | CloudFront Function rewrites extension-less paths (any unknown path, e.g. `/ghhghg`, reaches the app and shows Page not found; `/?q=shoes&page=2` reloads in place) | `infra/cloudfront/spa-rewrite.js`, `src/app/router.tsx` | e2e `cloudfront.spec.ts` (runs the function in a VM), e2e deep-link reloads |
 | No hardcoded secrets; `VITE_*` config | One module reads `import.meta.env` and validates it | `src/config/env.ts`, `.env.example` | `env.test.ts` |
-| Vitest + RTL tests: core filter/sort logic and a user flow | 527 tests in 31 files | `src/**/*.test.ts(x)` | `npm test` |
+| Vitest + RTL tests: core filter/sort logic and a user flow | 562 tests in 33 files | `src/**/*.test.ts(x)` | `npm test` |
 | README with setup, architecture, performance, CloudFront notes, improvements | This file | `README.md` | n/a |
 
 ### Add-ons beyond the brief
@@ -106,6 +106,8 @@ Everything in this table is visible in the default build and the live demo.
 | Conversational search: stop words, unknown-word and typo fallback | "ek smart tv chahie" and "runing shoez" should find products; the strict match always wins, and any correction is shown above the results | `src/search/stopWords.ts`, `src/search/fuzzy.ts`, `InMemorySearchEngine.ts` |
 | Mixed-language aliases (joote, जूते, kitab, किताब, tv/television, earphones...) | Mixed-language shoppers type these terms | `src/search/aliases.ts` |
 | Search suggestions and recent searches | From the first letter, completes with phrases and brands from the catalog and offers the last five searches. Typing still filters instantly; nothing is selected unless picked | `src/search/suggest.ts`, `src/search/recentSearches.ts`, `useSearchSuggestions.ts` |
+| Search by category name | "elec", "elect" or "electronics" finds the Electronics category (a word of three or more letters that starts a category name); a misspelt name is corrected, and categories appear in the suggestions | `InMemorySearchEngine.ts`, `suggest.ts` |
+| Product type filter (sub-categories, `type` in the URL) | Narrow Electronics to LED Monitor or Smart TV, or "shoes" to Running Shoes. `Product` keeps its eight fields: the type is read from the title. Types of the current results are listed with counts once a category or a search narrows the catalog | `src/domain/productType.ts`, `TypeFilter.tsx` |
 | Catalog brands in the empty state | The brands are invented, so a real one ("samsung") finds nothing; ten catalog brands (two per category) are offered as one-click searches | `sampleBrands.ts`, `EmptyState.tsx` |
 | Pagination (60 per page, `page` in the URL) | A position in 5,000 results is easy to share and return to; rows within a page are still virtualised | `src/domain/pagination.ts`, `components/ui/Pagination.tsx` |
 | Add to cart and Buy now on every card | Shopping actions on the catalog. They add to a cart kept in this browser and the card shows "1 in cart"; there is no cart page in the default build, so Buy now says checkout is not part of the demo | `CardActions.tsx`, `src/cart/`; `VITE_FEATURE_BUY_BUTTONS=false` hides them |
@@ -493,6 +495,7 @@ What keeps scrolling cheap, each found by profiling under throttling:
 |---|---|---|---|
 | `q` | `q=running%20shoes` | Text query exactly as typed (trimmed, max 100 characters) | empty |
 | `category` | `category=Apparel,Sports` | Comma-separated, canonical order | all |
+| `type` | `type=Smart%20TV,LED%20Monitor` | Product types, comma-separated, canonical order; unknown names are dropped. Unticking a category removes the types that belonged only to it | all |
 | `minPrice` / `maxPrice` | `maxPrice=5000` | Inclusive bounds (INR) | none |
 | `inStock` | `inStock=true` | Only in-stock products | all |
 | `sort` | `sort=price_asc` | `price_asc`, `price_desc`, `rating_desc` | dataset order ("Featured") |
@@ -644,7 +647,7 @@ script file itself has not been run.
 
 ## Tests
 
-`npm test`: **527 tests in 31 files** (Vitest, jsdom, React Testing Library, user-event):
+`npm test`: **562 tests in 33 files** (Vitest, jsdom, React Testing Library, user-event):
 generator (determinism, checksum, price spread, illustrations for every item type), mock
 service, engine filters and sorts, conversational search (stop words, fallback, typo table
 including brand typos, short-token and correct-query cases), URL codec, smart-search phrases,
@@ -654,15 +657,16 @@ cart summary, checkout validation, related products, star rating, price formatti
 helpers (columns, layout, pinned focused row), catalog interactions (flags off), cart/product/
 checkout interactions, the default build without cart and share, and an axe scan.
 
-`npm run e2e`: **87 tests in real Chrome** (about 1.9 minutes), against two production builds
+`npm run e2e`: **88 tests in real Chrome** (about 1.9 minutes), against two production builds
 served side by side from `.e2e/` (so `dist/` is never overwritten): 72 with the optional
-features on, and 15 on the default build (`default-build.spec.ts`: cards show the product
+features on, and 16 on the default build (`default-build.spec.ts`: cards show the product
 fields and the buy buttons and fit at 1440, 768, 390 and 320 px; no product links, cart link
 or Share; `/product/:id`, `/cart`, `/checkout` and any unknown address show Page not found, whose Retry
 opens the catalog; no Simulate API failure button; `?mockFail=1` shows the error state with a
 focused Retry that recovers; Buy now adds and stays
 on the page; an unknown brand offers the catalog brands; the logo clears search, filters and
-page; axe).
+page; "elect" finds Electronics, a product type narrows it, and price sorting and reload
+keep working; axe).
 - **Pages:** Next page by keyboard moves focus to the results heading; reload and Back keep the
   page in step with the URL; a shared `?page=3` opens page 3; a filter change returns to page 1;
   compact controls at 320 px.
@@ -692,10 +696,10 @@ page; axe).
 
 Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 
-- `npm run typecheck`, `npm run lint` exit 0; `npm test` 527 passed in 31 files;
-  `npm run e2e` 87 passed in real Chrome, including axe on every main page.
+- `npm run typecheck`, `npm run lint` exit 0; `npm test` 562 passed in 33 files;
+  `npm run e2e` 88 passed in real Chrome, including axe on every main page.
 - The S3 + CloudFront deployment: see the checks listed under "Deploying to S3 + CloudFront".
-- Build (default flags): main JS 329.42 kB (106.32 kB gzip), CSS 38.01 kB (8.48 kB gzip).
+- Build (default flags): main JS 330.81 kB (106.68 kB gzip), CSS 38.01 kB (8.48 kB gzip).
   Lazy chunks, loaded only when their optional feature is on: StorePage 62.88 kB (22.48 kB
   gzip, shared by the product, cart and checkout pages), CartPage 7.12 kB, ProductPage 6.63 kB,
   CheckoutPage 5.53 kB, QuantityStepper 1.41 kB, ConfirmationPage 1.26 kB. Font: Inter

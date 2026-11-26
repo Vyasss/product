@@ -1,5 +1,6 @@
 import type { FilterState } from '../domain/filters';
 import type { Product } from '../domain/product';
+import type { ItemType } from '../domain/productType';
 import type { FacetCounts } from './facetCounts';
 import type { SuggestionEntry } from './suggest';
 
@@ -8,6 +9,11 @@ export interface SearchResult {
   readonly indices: readonly number[];
   readonly total: number;
   readonly facetCounts: FacetCounts;
+  /**
+   * Products per product type with every filter applied except the type filter itself
+   * (types with no match are absent), in ALL_ITEM_TYPES order.
+   */
+  readonly typeCounts: ReadonlyMap<ItemType, number>;
   /**
    * Set only when the strict match was empty and the query was relaxed: the words actually
    * searched for, typo corrections made, and words dropped because nothing matched them.

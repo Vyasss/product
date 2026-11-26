@@ -1,7 +1,8 @@
 import { isPriceRangeInverted, type FilterState, type SortKey } from '../domain/filters';
 import { CATEGORIES, type Product } from '../domain/product';
 import { ALIAS_TERMS, expandToken } from './aliases';
-import { buildIndex, CATEGORY_CODE, type SearchIndex } from './buildIndex';
+import { ALL_ITEM_TYPES, type ItemType } from '../domain/productType';
+import { buildIndex, CATEGORY_CODE, CATEGORY_KEYS, ITEM_TYPE_CODE, type SearchIndex } from './buildIndex';
 import { facetCountsFromArray } from './facetCounts';
 import { closestBySound, closestWord, splitCompound, type VocabularyWord } from './fuzzy';
 import { tokenize } from './normalize';
@@ -24,13 +25,43 @@ function comparatorFor(sort: SortKey, index: SearchIndex): Comparator {
   }
 }
 
-/** Distinct normalised words of titles and brands (with product counts), plus alias keys. */
-function buildVocabulary(haystacks: readonly string[]): VocabularyWord[] {
+/** Shortest query word that may name a category by its first letters ("ele" for Electronics). */
+const MIN_CATEGORY_PREFIX = 3;
+
+/** Category codes whose name starts with one of the terms; null when there is none. */
+function categoriesNamedBy(terms: readonly string[]): Uint8Array | null {
+  let named: Uint8Array | null = null;
+  CATEGORY_KEYS.forEach((key, code) => {
+    if (terms.some((term) => term.length >= MIN_CATEGORY_PREFIX && key.startsWith(term))) {
+      named ??= new Uint8Array(CATEGORY_KEYS.length);
+      named[code] = 1;
+    }
+  });
+  return named;
+}
+
+/** One query word: the texts that may appear in title + brand, and the categories it names. */
+interface TokenMatcher {
+  readonly terms: readonly string[];
+  readonly categories: Uint8Array | null;
+}
+
+const matcherFor = (token: string): TokenMatcher => {
+  const terms = expandToken(token);
+  return { terms, categories: categoriesNamedBy(terms) };
+};
+
+/** Distinct normalised words of titles, brands and category names (with product counts), plus alias keys. */
+function buildVocabulary(index: SearchIndex): VocabularyWord[] {
   const frequency = new Map<string, number>();
-  for (const haystack of haystacks) {
+  for (const haystack of index.haystacks) {
     for (const word of new Set(haystack.split(/[^\p{L}\p{M}\p{N}-]+/u))) {
       if (word.length >= 2) frequency.set(word, (frequency.get(word) ?? 0) + 1);
     }
+  }
+  for (const code of index.category) {
+    const key = CATEGORY_KEYS[code];
+    if (key !== undefined) frequency.set(key, (frequency.get(key) ?? 0) + 1);
   }
   for (const term of ALIAS_TERMS) if (!frequency.has(term)) frequency.set(term, 0);
   return Array.from(frequency, ([word, count]) => ({ word, frequency: count }));
@@ -40,9 +71,11 @@ function buildVocabulary(haystacks: readonly string[]): VocabularyWord[] {
  * Linear scan over a column-oriented index. For 5,000 items this takes well under a
  * millisecond per query (see `npm run bench`), so there is no need for an inverted index.
  *
- * Rules: groups combine with AND; categories with OR (none = all); price bounds are
- * inclusive and ignored when inverted; every query token (or one of its aliases) must
- * appear in title + brand. Facet counts apply every filter except category.
+ * Rules: groups combine with AND; categories with OR (none = all), and so do product types;
+ * price bounds are inclusive and ignored when inverted; every query token (or one of its
+ * aliases) must appear in title + brand, or be the start of the product's category name
+ * ("elec", "electronics"). Category counts apply every filter except category; type counts
+ * apply every filter except type.
  *
  * Query handling, in order:
  * 1. Stop words ("ek", "please", "चाहिए") are removed, unless the query is only stop words.
@@ -64,7 +97,7 @@ export class InMemorySearchEngine implements SearchEngine {
 
   constructor(products: readonly Product[]) {
     this.index = buildIndex(products);
-    this.vocabulary = buildVocabulary(this.index.haystacks);
+    this.vocabulary = buildVocabulary(this.index);
     this.wordFrequency = new Map(this.vocabulary.map(({ word, frequency }) => [word, frequency]));
   }
 
@@ -79,12 +112,12 @@ export class InMemorySearchEngine implements SearchEngine {
 
   search(filters: FilterState): SearchResult {
     const tokens = withoutStopWords(tokenize(filters.q));
-    const strict = this.scan(filters, tokens.map(expandToken));
+    const strict = this.scan(filters, tokens.map(matcherFor));
     if (strict.indices.length > 0 || tokens.length === 0) return this.finish(filters, strict, null);
 
     const relaxation = this.relax(tokens);
     if (!relaxation) return this.finish(filters, strict, null);
-    const relaxed = this.scan(filters, relaxation.tokens.map(expandToken));
+    const relaxed = this.scan(filters, relaxation.tokens.map(matcherFor));
     if (relaxed.indices.length === 0) return this.finish(filters, strict, null);
     return this.finish(filters, relaxed, relaxation.info);
   }
@@ -121,12 +154,13 @@ export class InMemorySearchEngine implements SearchEngine {
   }
 
   private matchesAnyProduct(token: string): boolean {
-    const group = expandToken(token);
-    return this.index.haystacks.some((haystack) => group.some((term) => haystack.includes(term)));
+    const matcher = matcherFor(token);
+    const { haystacks, category } = this.index;
+    return haystacks.some((haystack, i) => matchesToken(haystack, category[i] ?? 0, matcher));
   }
 
-  private scan(filters: FilterState, tokenGroups: readonly (readonly string[])[]): { indices: number[]; facets: Uint32Array } {
-    const { haystacks, price, inStock, category } = this.index;
+  private scan(filters: FilterState, matchers: readonly TokenMatcher[]): Scan {
+    const { haystacks, price, inStock, category, itemType } = this.index;
     const count = haystacks.length;
     const applyPrice = !isPriceRangeInverted(filters);
     const min = applyPrice && filters.minPrice !== null ? filters.minPrice : -Infinity;
@@ -136,43 +170,56 @@ export class InMemorySearchEngine implements SearchEngine {
     for (const c of filters.categories) selected[CATEGORY_CODE[c]] = 1;
     const anyCategory = filters.categories.length === 0;
 
+    const selectedTypes = new Uint8Array(ALL_ITEM_TYPES.length);
+    for (const type of filters.types) selectedTypes[ITEM_TYPE_CODE.get(type) ?? 0] = 1;
+    const anyType = filters.types.length === 0;
+
     const facets = new Uint32Array(CATEGORIES.length);
+    const typeFacets = new Uint32Array(ALL_ITEM_TYPES.length);
     const indices: number[] = [];
 
     for (let i = 0; i < count; i++) {
       if (filters.inStock && inStock[i] === 0) continue;
       const p = price[i] ?? 0;
       if (p < min || p > max) continue;
-      if (tokenGroups.length > 0 && !matchesAllTokens(haystacks[i] ?? '', tokenGroups)) continue;
-
       const code = category[i] ?? 0;
-      facets[code] = (facets[code] ?? 0) + 1;
-      if (anyCategory || selected[code] === 1) indices.push(i);
+      if (matchers.length > 0 && !matchesAllTokens(haystacks[i] ?? '', code, matchers)) continue;
+
+      const type = itemType[i] ?? -1;
+      const categoryOk = anyCategory || selected[code] === 1;
+      const typeOk = anyType || (type >= 0 && selectedTypes[type] === 1);
+      if (typeOk) facets[code] = (facets[code] ?? 0) + 1;
+      if (categoryOk && type >= 0) typeFacets[type] = (typeFacets[type] ?? 0) + 1;
+      if (categoryOk && typeOk) indices.push(i);
     }
-    return { indices, facets };
+    return { indices, facets, typeFacets };
   }
 
-  private finish(
-    filters: FilterState,
-    { indices, facets }: { indices: number[]; facets: Uint32Array },
-    relaxed: SearchRelaxation | null,
-  ): SearchResult {
+  private finish(filters: FilterState, { indices, facets, typeFacets }: Scan, relaxed: SearchRelaxation | null): SearchResult {
     if (filters.sort !== null) indices.sort(comparatorFor(filters.sort, this.index));
-    return { indices, total: indices.length, facetCounts: facetCountsFromArray(facets), relaxed };
+    const typeCounts = new Map<ItemType, number>();
+    ALL_ITEM_TYPES.forEach((type, code) => {
+      const matches = typeFacets[code] ?? 0;
+      if (matches > 0) typeCounts.set(type, matches);
+    });
+    return { indices, total: indices.length, facetCounts: facetCountsFromArray(facets), typeCounts, relaxed };
   }
 }
 
-function matchesAllTokens(haystack: string, tokenGroups: readonly (readonly string[])[]): boolean {
-  for (const group of tokenGroups) {
-    let matched = false;
-    for (const term of group) {
-      if (haystack.includes(term)) {
-        matched = true;
-        break;
-      }
-    }
-    if (!matched) return false;
-  }
+interface Scan {
+  indices: number[];
+  facets: Uint32Array;
+  typeFacets: Uint32Array;
+}
+
+function matchesToken(haystack: string, categoryCode: number, { terms, categories }: TokenMatcher): boolean {
+  if (categories !== null && categories[categoryCode] === 1) return true;
+  for (const term of terms) if (haystack.includes(term)) return true;
+  return false;
+}
+
+function matchesAllTokens(haystack: string, categoryCode: number, matchers: readonly TokenMatcher[]): boolean {
+  for (const matcher of matchers) if (!matchesToken(haystack, categoryCode, matcher)) return false;
   return true;
 }
 

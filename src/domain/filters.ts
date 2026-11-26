@@ -1,4 +1,5 @@
 import type { Category } from './product';
+import type { ItemType } from './productType';
 
 export const SORT_KEYS = ['price_asc', 'price_desc', 'rating_desc'] as const;
 
@@ -15,6 +16,8 @@ export interface FilterState {
   q: string;
   /** Canonical CATEGORIES order, no duplicates. Empty means all categories. */
   categories: readonly Category[];
+  /** Product types (sub-categories), in ALL_ITEM_TYPES order, no duplicates. Empty means all types. */
+  types: readonly ItemType[];
   minPrice: number | null;
   maxPrice: number | null;
   /** true = only in-stock products; false = all products. */
@@ -30,6 +33,7 @@ export const MAX_QUERY_LENGTH = 100;
 export const DEFAULT_FILTERS: FilterState = Object.freeze({
   q: '',
   categories: Object.freeze([]),
+  types: Object.freeze([]),
   minPrice: null,
   maxPrice: null,
   inStock: false,
@@ -57,6 +61,7 @@ export function hasActiveFilters(filters: FilterState): boolean {
   return (
     filters.q !== '' ||
     filters.categories.length > 0 ||
+    filters.types.length > 0 ||
     filters.minPrice !== null ||
     filters.maxPrice !== null ||
     filters.inStock

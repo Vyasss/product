@@ -11,6 +11,7 @@ describe('parseFilters', () => {
     expect(parse('?q=shoes&category=Apparel,Sports&inStock=true&sort=price_asc')).toEqual({
       q: 'shoes',
       categories: ['Apparel', 'Sports'],
+      types: [],
       minPrice: null,
       maxPrice: null,
       inStock: true,
@@ -67,6 +68,7 @@ describe('serializeFilters', () => {
     const filters: FilterState = {
       q: 'a',
       categories: ['Home'],
+      types: [],
       minPrice: 10,
       maxPrice: 20,
       inStock: true,
@@ -98,7 +100,7 @@ describe('serializeFilters', () => {
 describe('round trip', () => {
   it.each<[string, FilterState]>([
     ['defaults', DEFAULT_FILTERS],
-    ['everything set', { q: 'running shoes', categories: ['Electronics', 'Books'], minPrice: 0, maxPrice: 4999.5, inStock: true, sort: 'price_desc' }],
+    ['everything set', { q: 'running shoes', categories: ['Electronics', 'Books'], types: ['Laptop', 'Novel'], minPrice: 0, maxPrice: 4999.5, inStock: true, sort: 'price_desc' }],
     ['ampersand and plus', { ...DEFAULT_FILTERS, q: 'salt & pepper + more' }],
     ['Devanagari', { ...DEFAULT_FILTERS, q: 'जूते किताब' }],
     ['accents and quotes', { ...DEFAULT_FILTERS, q: 'café "élan" 100%' }],

@@ -17,6 +17,7 @@ export function serializeFilters(filters: FilterState, current: URLSearchParams,
   if (filters.categories.length > 0) {
     parts.push(`category=${filters.categories.map(encode).join(',')}`);
   }
+  if (filters.types.length > 0) parts.push(`type=${filters.types.map(encode).join(',')}`);
   if (filters.minPrice !== null) parts.push(`minPrice=${filters.minPrice}`);
   if (filters.maxPrice !== null) parts.push(`maxPrice=${filters.maxPrice}`);
   if (filters.inStock) parts.push('inStock=true');

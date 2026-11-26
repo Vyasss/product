@@ -20,6 +20,7 @@ const NO_SUGGESTIONS: readonly SearchSuggestion[] = [];
 const KIND_LABEL: Record<SearchSuggestion['kind'], string | null> = {
   recent: 'Recent',
   brand: 'Brand',
+  category: 'Category',
   product: null,
 };
 

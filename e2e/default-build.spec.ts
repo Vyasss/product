@@ -110,3 +110,37 @@ test('clicking the logo shows all products again, from any search, filter and pa
   await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText('5,000 results');
   expect(await page.evaluate(() => window.scrollY)).toBeLessThan(200);
 });
+
+test('"elect" finds Electronics; a product type narrows it; sorting and reload keep working', async ({ page }) => {
+  await page.goto('/');
+  await waitForCards(page);
+  const types = page.getByRole('group', { name: 'Product type' });
+  await expect(types.getByRole('checkbox')).toHaveCount(0);
+
+  await page.getByRole('combobox', { name: 'Search products' }).fill('elect');
+  const heading = page.getByRole('heading', { level: 2 }).first();
+  await expect(heading).toHaveText('1,011 results for “elect”');
+  // The eight Electronics types, each with its count.
+  await expect(types.getByRole('checkbox')).toHaveCount(8);
+
+  await types.getByRole('checkbox', { name: /^LED Monitor/ }).click();
+  await expectSearch(page, '?q=elect&type=LED%20Monitor');
+  await expect(heading).toHaveText('143 results for “elect”');
+  await expect(page.getByRole('button', { name: 'Remove filter: LED Monitor' })).toBeVisible();
+
+  const prices = async () =>
+    (await page.locator('[role="listitem"]').evaluateAll((cards) => cards.map((card) => card.textContent ?? '')))
+      .map((text) => Number((/₹([\d,]+)/.exec(text)?.[1] ?? '').replaceAll(',', '')))
+      .slice(0, 8);
+  await page.getByRole('combobox', { name: 'Sort by' }).selectOption('price_asc');
+  await expectSearch(page, '?q=elect&type=LED%20Monitor&sort=price_asc');
+  await expect.poll(async () => { const p = await prices(); return p.every((price, i) => i === 0 || (p[i - 1] ?? 0) <= price); }).toBe(true);
+  await page.getByRole('combobox', { name: 'Sort by' }).selectOption('price_desc');
+  await expect.poll(async () => { const p = await prices(); return p.every((price, i) => i === 0 || (p[i - 1] ?? 0) >= price); }).toBe(true);
+  for (const title of await page.locator('[role="listitem"] h3').allInnerTexts()) expect(title).toContain('LED Monitor');
+
+  await page.reload();
+  await waitForCards(page);
+  await expect(heading).toHaveText('143 results for “elect”');
+  await expect(types.getByRole('checkbox', { name: /^LED Monitor/ })).toBeChecked();
+});

@@ -187,6 +187,7 @@ export function CatalogPage() {
 
   const canClear = hasActiveFilters(filters) || search.text !== '' || filters.sort !== null;
   const facetCounts = result?.facetCounts ?? null;
+  const typeCounts = result?.typeCounts ?? null;
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -224,7 +225,13 @@ export function CatalogPage() {
       <div className="mx-auto flex w-full max-w-screen-2xl flex-1 gap-6 px-4">
         <aside aria-label="Filters" className="hidden w-64 shrink-0 pt-4 lg:block">
           <Card className="sticky top-[calc(var(--header-h)+1rem)] max-h-[calc(100vh-var(--header-h)-2rem)] overflow-y-auto p-5">
-            <FilterPanel filters={filters} facetCounts={facetCounts} onUpdate={update} />
+            <FilterPanel
+              filters={filters}
+              facetCounts={facetCounts}
+              typeCounts={typeCounts}
+              query={search.deferredQuery}
+              onUpdate={update}
+            />
           </Card>
         </aside>
 
@@ -299,7 +306,13 @@ export function CatalogPage() {
           </Button>
         }
       >
-        <FilterPanel filters={filters} facetCounts={facetCounts} onUpdate={update} />
+        <FilterPanel
+              filters={filters}
+              facetCounts={facetCounts}
+              typeCounts={typeCounts}
+              query={search.deferredQuery}
+              onUpdate={update}
+            />
       </Drawer>
 
     </div>

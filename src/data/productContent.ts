@@ -1,5 +1,5 @@
 import type { Category, Product } from '../domain/product';
-import { ITEM_TYPES, type ItemType } from './itemTypes';
+import { itemTypeOf, type ItemType } from '../domain/productType';
 import { mulberry32, pick, type Random } from './prng';
 import { ILLUSTRATION_FOR_ITEM, type IllustrationName } from './thumbnails';
 
@@ -288,15 +288,7 @@ function hash(text: string): number {
   return h >>> 0;
 }
 
-/** The item type named in the title (longest match in the product's category), if any. */
-export function itemTypeOf(product: Pick<Product, 'title' | 'category'>): ItemType | null {
-  const title = product.title.toLowerCase();
-  let best: ItemType | null = null;
-  for (const item of ITEM_TYPES[product.category]) {
-    if (title.includes(item.toLowerCase()) && (best === null || item.length > best.length)) best = item;
-  }
-  return best;
-}
+export { itemTypeOf };
 
 export function kindOf(product: Pick<Product, 'title' | 'category'>): Kind {
   const item = itemTypeOf(product);

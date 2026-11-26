@@ -5,7 +5,7 @@ import type { SearchEngine } from '../../search/SearchEngine';
 
 export interface SearchSuggestion {
   text: string;
-  kind: 'recent' | 'product' | 'brand';
+  kind: 'recent' | 'product' | 'brand' | 'category';
 }
 
 const MAX_MATCHING_RECENTS = 2;

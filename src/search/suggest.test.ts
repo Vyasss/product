@@ -91,7 +91,7 @@ describe('suggest', () => {
 describe('suggestions through the engine', () => {
   it('every suggestion from the real catalog finds products', () => {
     const engine = createInMemorySearchEngine(generateProducts());
-    const base = { categories: [], minPrice: null, maxPrice: null, inStock: false, sort: null } as const;
+    const base = { categories: [], types: [], minPrice: null, maxPrice: null, inStock: false, sort: null } as const;
     for (const typed of ['sm', 'run', 'sho', 'he', 'bo', 'yo', 'co']) {
       const suggestions = engine.suggest(typed);
       expect(suggestions.length).toBeGreaterThan(0);
