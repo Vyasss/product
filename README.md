@@ -30,7 +30,7 @@ are in [`docs/screenshots/optional/`](docs/screenshots/optional).
 - [Tests](#tests)
 - [Growth path](#growth-path)
 - [What I would improve with more time](#what-i-would-improve-with-more-time)
-- [What has and has not been verified](#what-has-and-has-not-been-verified)
+- [What has been verified](#what-has-been-verified)
 
 ## Quick start
 
@@ -692,7 +692,19 @@ keep working; axe).
   contract and UI stay. `ProductContentProvider` would read real descriptions and review data.
   `CartStore` could sync to a server for signed-in users behind the same interface.
 
-## What has verified
+## What I would improve with more time
+
+- **Test on real devices and more browsers.** Measure scrolling and typing on a mid-range
+  Android phone, and run the suite in Safari and Firefox as well as Chrome.
+- **Smoother scrolling on very slow devices.** Reuse each card's DOM as rows scroll instead of
+  mounting new cards, the main remaining cost at 6x CPU throttling.
+- **Run the end-to-end suite in CI**, so every push is checked in a real browser.
+- **Relevance ranking** for the default order, with title matches ahead of brand matches.
+- **Real product photos** from a CDN with responsive sizes, in place of the shared illustrations.
+- **A product type field from the API.** The type is read from the title today because
+  `Product` has eight fixed fields; a real catalog would send it.
+
+## What has been verified
 
 Verified on this machine (Windows 11, Node 24.15.0, Chrome 157):
 
