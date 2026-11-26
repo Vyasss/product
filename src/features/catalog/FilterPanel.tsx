@@ -40,14 +40,12 @@ export const FilterPanel = memo(function FilterPanel({ filters, facetCounts, typ
       <div>
         <CategoryFilter selected={filters.categories} facetCounts={facetCounts} onChange={onCategories} />
       </div>
-      <div>
-        <TypeFilter
-          selected={types}
-          typeCounts={typeCounts}
-          narrowed={filters.categories.length > 0 || query !== ''}
-          onChange={onTypes}
-        />
-      </div>
+      {/* Shown once a category or a search narrows the catalog (or a type is already ticked). */}
+      {(filters.categories.length > 0 || query !== '' || types.length > 0) && (
+        <div>
+          <TypeFilter selected={types} typeCounts={typeCounts} onChange={onTypes} />
+        </div>
+      )}
       <div>
         <PriceRangeFilter minPrice={filters.minPrice} maxPrice={filters.maxPrice} onCommit={onPrice} />
       </div>

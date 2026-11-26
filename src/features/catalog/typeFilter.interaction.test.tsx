@@ -31,11 +31,10 @@ describe('type in the URL', () => {
 });
 
 describe('product type filter', () => {
-  it('asks for a category or a search first, then lists the types of the results with counts', async () => {
+  it('appears once a category or a search narrows the catalog, with the types of the results and counts', async () => {
     const { user } = renderApp();
     await resultsHeading('12 results');
-    expect(within(typeGroup()).getByText('Choose a category or search to filter by product type.')).toBeInTheDocument();
-    expect(within(typeGroup()).queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Product type' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('checkbox', { name: /^Sports/ }));
     await resultsHeading('3 results');

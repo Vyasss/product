@@ -115,7 +115,7 @@ test('"elect" finds Electronics; a product type narrows it; sorting and reload k
   await page.goto('/');
   await waitForCards(page);
   const types = page.getByRole('group', { name: 'Product type' });
-  await expect(types.getByRole('checkbox')).toHaveCount(0);
+  await expect(types).toHaveCount(0);
 
   await page.getByRole('combobox', { name: 'Search products' }).fill('elect');
   const heading = page.getByRole('heading', { level: 2 }).first();

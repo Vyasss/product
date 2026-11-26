@@ -7,21 +7,17 @@ export interface TypeFilterProps {
   selected: readonly ItemType[];
   /** Products per type with every other filter applied; null while products load. */
   typeCounts: ReadonlyMap<ItemType, number> | null;
-  /** True once a search or a category narrows the catalog; until then the list would be every type. */
-  narrowed: boolean;
   onChange: (types: readonly ItemType[]) => void;
 }
 
 /**
  * Product types (sub-categories) of the current results: tick "LED Monitor" under Electronics,
  * or "Running Shoes" after searching "shoes". Only types that have products are listed, plus
- * any that are ticked. `Product` has no type field; the type is read from the title.
+ * any that are ticked. `Product` has no type field; the type is read from the title. The
+ * filter panel renders this only once a category or a search narrows the catalog.
  */
-export const TypeFilter = memo(function TypeFilter({ selected, typeCounts, narrowed, onChange }: TypeFilterProps) {
-  const shown = narrowed || selected.length > 0;
-  const options = shown
-    ? ALL_ITEM_TYPES.filter((type) => selected.includes(type) || (typeCounts?.get(type) ?? 0) > 0)
-    : [];
+export const TypeFilter = memo(function TypeFilter({ selected, typeCounts, onChange }: TypeFilterProps) {
+  const options = ALL_ITEM_TYPES.filter((type) => selected.includes(type) || (typeCounts?.get(type) ?? 0) > 0);
 
   const toggle = (type: ItemType, checked: boolean) => {
     const next = new Set(selected);
@@ -34,9 +30,7 @@ export const TypeFilter = memo(function TypeFilter({ selected, typeCounts, narro
     <fieldset>
       <legend className="mb-2 text-sm font-bold tracking-wide text-ink uppercase">Product type</legend>
       {options.length === 0 ? (
-        <p className="text-sm text-ink-muted">
-          {shown ? 'No product types match.' : 'Choose a category or search to filter by product type.'}
-        </p>
+        <p className="text-sm text-ink-muted">No product types match.</p>
       ) : (
         options.map((type) => (
           <Checkbox
